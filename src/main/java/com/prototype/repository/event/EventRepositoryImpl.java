@@ -23,7 +23,8 @@ public class EventRepositoryImpl implements EventRepository {
 
     @Override
     public <S extends Event> S save(S entity) {
-        return crudEventRepository.save(entity);
+        Event saveEvent = crudEventRepository.save(entity);
+        return (S) findOne(saveEvent.getId());
     }
 
     @Override

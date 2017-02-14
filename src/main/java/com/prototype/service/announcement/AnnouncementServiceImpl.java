@@ -39,9 +39,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         User user = userRepository.findOne(userId);
         Address address = addressRepository.findOne(announcement.getAddressId());
         UserAnnouncementEvent userAnnouncementEvent = new UserAnnouncementEvent(announcement.getTitleAnnouncement(), LocalDateTime.now(), address, user, announcement.getTextAnnouncement());
-        userAnnouncementEvent = eventRepository.save(userAnnouncementEvent);
-        userAnnouncementEvent.setClassName(userAnnouncementEvent.getClass().getCanonicalName());
-        return userAnnouncementEvent;
+        return eventRepository.save(userAnnouncementEvent);
     }
 
     @Override

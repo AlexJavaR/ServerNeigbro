@@ -123,8 +123,7 @@ public class Address extends BaseEntity {
     public void setEntrance(String entrance) {
         this.entrance = entrance;
     }
-
-    @JsonIgnore
+    
     public boolean isManagerExist() {
         return managerExist;
     }

@@ -55,19 +55,21 @@ public class MessageController {
 
     @GetMapping("/me/chat/{addressId}/{number}")
     public ResponseEntity<List<Message>> findAllFromId(@PathVariable BigInteger addressId, @PathVariable BigInteger number) {
+        BigInteger userId = AuthorizedUser.id();
         ObjectId objectMessageId = new ObjectId(number.toString(16));
         Message message = messageService.findOne(number);
         Address address = addressService.findOne(addressId);
         if (message == null || address == null)
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         else {
-            List<Message> messageList = messageRepository.findByAddressAndIdGreaterThan(address, objectMessageId);
-            if (messageList == null)
+            List<Message> messages = messageRepository.findByAddressAndIdGreaterThan(address, objectMessageId);
+            if (messages == null)
                 return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-            else if (messageList.isEmpty())
+            else if (messages.isEmpty())
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             else
-                return new ResponseEntity<>(messageList, HttpStatus.OK);
+                messages.stream().filter(m -> m.getAuthor().getId().equals(userId)).forEach(m -> m.setSelf(true));
+                return new ResponseEntity<>(messages, HttpStatus.OK);
         }
     }
 

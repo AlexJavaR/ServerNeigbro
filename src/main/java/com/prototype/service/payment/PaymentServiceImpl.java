@@ -130,11 +130,13 @@ public class PaymentServiceImpl implements PaymentService {
                 housematePayPalPaymentEvent.getListSettledBills().add(billEvent);
 
                 Address address = ad.getAddress();
-                if (billEvent.getClass().getSimpleName().equals("SingleBillEvent")) {
-                    address.setAccountBalance(address.getAccountBalance() + billEvent.getBill());
-                } else if (billEvent.getClass().getSimpleName().equals("MonthlyBillEvent")) {
-                    address.setFundAddress(address.getFundAddress() + billEvent.getBill());
-                }
+                address.setFundAddress(address.getFundAddress() + billEvent.getBill());
+                address.setAccountBalance(address.getAccountBalance() + billEvent.getBill());
+//                if (billEvent.getClass().getSimpleName().equals("SingleBillEvent")) {
+//                    address.setAccountBalance(address.getAccountBalance() + billEvent.getBill());
+//                } else if (billEvent.getClass().getSimpleName().equals("MonthlyBillEvent")) {
+//                    address.setFundAddress(address.getFundAddress() + billEvent.getBill());
+//                }
                 addressRepository.save(address);
                 return eventRepository.save(housematePayPalPaymentEvent);
             }
@@ -152,12 +154,14 @@ public class PaymentServiceImpl implements PaymentService {
                 listUnsettledBills.forEach(billEvent -> {
                     billEvent.setSettled(true);
                     eventRepository.save(billEvent);
-                    if (billEvent.getClass().getSimpleName().equals("SingleBillEvent")) {
-                        address.setAccountBalance(address.getAccountBalance() + billEvent.getBill());
-                    } else if (billEvent.getClass().getSimpleName().equals("MonthlyBillEvent")) {
-                        address.setFundAddress(address.getFundAddress() + billEvent.getBill());
-                    }
-
+                    address.setFundAddress(address.getFundAddress() + billEvent.getBill());
+                    address.setAccountBalance(address.getAccountBalance() + billEvent.getBill());
+//                    if (billEvent.getClass().getSimpleName().equals("SingleBillEvent")) {
+//                        address.setAccountBalance(address.getAccountBalance() + billEvent.getBill());
+//                    } else if (billEvent.getClass().getSimpleName().equals("MonthlyBillEvent")) {
+//                        address.setFundAddress(address.getFundAddress() + billEvent.getBill());
+//                        address.setAccountBalance(address.getAccountBalance() + billEvent.getBill());
+//                    }
                 });
                 addressRepository.save(address);
                 HousematePayPalPaymentEvent housematePayPalPaymentEvent = new HousematePayPalPaymentEvent(LocalDateTime.now(), address, apartment);
@@ -177,9 +181,10 @@ public class PaymentServiceImpl implements PaymentService {
             if (billEvent.getApartment().equals(apartment)) {
                 billEvent.setSettled(true);
                 eventRepository.save(billEvent);
-                if (billEvent.getClass().getSimpleName().equals("MonthlyBillEvent")) {
-                    address.setFundAddress(address.getFundAddress() + billEvent.getBill());
-                }
+                address.setFundAddress(address.getFundAddress() + billEvent.getBill());
+//                if (billEvent.getClass().getSimpleName().equals("MonthlyBillEvent")) {
+//                    address.setFundAddress(address.getFundAddress() + billEvent.getBill());
+//                }
                 addressRepository.save(address);
                 HousemateCashPaymentEvent housemateCashPaymentEvent = new HousemateCashPaymentEvent(LocalDateTime.now(), address, apartment);
                 housemateCashPaymentEvent.getListSettledBills().add(billEvent);
@@ -200,9 +205,10 @@ public class PaymentServiceImpl implements PaymentService {
             for (BillEvent billEvent : listUnsettledBills) {
                 billEvent.setSettled(true);
                 eventRepository.save(billEvent);
-                if (billEvent.getClass().getSimpleName().equals("MonthlyBillEvent")) {
-                    amount += billEvent.getBill();
-                }
+                amount += billEvent.getBill();
+//                if (billEvent.getClass().getSimpleName().equals("MonthlyBillEvent")) {
+//                    amount += billEvent.getBill();
+//                }
             }
             address.setFundAddress(address.getFundAddress() + amount);
             addressRepository.save(address);
@@ -220,25 +226,24 @@ public class PaymentServiceImpl implements PaymentService {
         Address address = addressRepository.findOne(addressId);
         AddressData addressData = userRepository.getAddressDataByAddress(currentUser, address);
         if (Role.MANAGER.equals(addressData.getRole())) {
-
             //add ManagerPaymentEvent
             ManagerPaymentEvent paymentEvent = eventRepository.save(new ManagerPaymentEvent(singleManagerPayment.getTitle(),
                     LocalDateTime.now(), address, currentUser, singleManagerPayment.getDescription(), singleManagerPayment.getTotalAmount(), singleManagerPayment.isFromFundAddress()));
+            if (address.getFundAddress() == null) {
+                address.setFundAddress(0 - singleManagerPayment.getTotalAmount());
+            } else {
+                address.setFundAddress(address.getFundAddress() - singleManagerPayment.getTotalAmount());
+            }
+            addressRepository.update(address);
             if (singleManagerPayment.isFromFundAddress()) {
-                if (address.getFundAddress() == null) {
-                    address.setFundAddress(0 - singleManagerPayment.getTotalAmount());
-                } else {
-                    address.setFundAddress(address.getFundAddress() - singleManagerPayment.getTotalAmount());
-                }
-                addressRepository.update(address);
                 return paymentEvent;
+            } else {
+                int singleBillAmount = singleManagerPayment.getTotalAmount() / address.getListOfApartment().size();
+                for (String apartment : address.getListOfApartment()) {
+                    addSingleBill(address, apartment, singleBillAmount, paymentEvent);
+                }
+                return paymentEvent; //no need to return SingleBillEvent
             }
-
-            int singleBillAmount = singleManagerPayment.getTotalAmount() / address.getListOfApartment().size();
-            for (String apartment : address.getListOfApartment()) {
-                addSingleBill(address, apartment, singleBillAmount, paymentEvent);
-            }
-            return paymentEvent; //no need to return SingleBillEvent
         }
         return null;
     }

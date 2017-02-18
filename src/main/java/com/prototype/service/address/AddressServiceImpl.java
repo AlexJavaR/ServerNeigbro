@@ -68,6 +68,39 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    public AddressData updateAddressData(AddressData addressData, BigInteger userId) {
+        Address currentAddress = addressRepository.findOne(addressData.getAddress().getId());
+        User currentUser = userRepository.findOne(userId);
+        AddressData currentAddressData = userRepository.getAddressDataByAddress(currentUser, currentAddress);
+        if (addressData.getRole().equals(Role.MANAGER)) {
+            currentAddressData.setTitle(addressData.getTitle() != null ? addressData.getTitle() : currentAddressData.getTitle());
+            currentAddress.setEntrance(addressData.getAddress().getEntrance() != null ? addressData.getAddress().getEntrance() : currentAddress.getEntrance());
+            currentAddress.setFirstApartment(addressData.getAddress().getFirstApartment() != null ? addressData.getAddress().getFirstApartment() : currentAddress.getFirstApartment());
+            currentAddress.setLastApartment(addressData.getAddress().getLastApartment() != null ? addressData.getAddress().getLastApartment() : currentAddress.getLastApartment());
+            currentAddress.setMonthlyFee(addressData.getAddress().getMonthlyFee() != null ? addressData.getAddress().getMonthlyFee() : currentAddress.getMonthlyFee());
+            currentAddress.setPhoneNumber(addressData.getAddress().getPhoneNumber() != null ? addressData.getAddress().getPhoneNumber() : currentAddress.getPhoneNumber());
+            currentAddressData.setAddress(currentAddress);
+            if (addressData.getAddress().getFirstApartment() != null && addressData.getAddress().getLastApartment() != null) {
+                currentAddress.setListOfApartment(new ArrayList<>());
+                for (int i = addressData.getAddress().getFirstApartment(); i <= addressData.getAddress().getLastApartment(); i++) {
+                    currentAddress.getListOfApartment().add(String.valueOf(i));
+                }
+            }
+            userRepository.save(currentUser);
+            addressRepository.update(currentAddress);
+            return currentAddressData;
+        } else if (addressData.getRole().equals(Role.HOUSEMATE)) {
+            if (currentAddress.getListOfApartment().contains(addressData.getApartment())) {
+                currentAddressData.setTitle(addressData.getTitle() != null ? addressData.getTitle() : currentAddressData.getTitle());
+                currentAddressData.setApartment(addressData.getApartment() != null ? addressData.getApartment() : currentAddressData.getApartment());
+                userRepository.save(currentUser);
+                return currentAddressData;
+            }
+        }
+        return null;
+    }
+
+    @Override
     public Address update(Address address, BigInteger userId) {
         Address currentAddress = addressRepository.findOne(address.getId());
         User currentUser = userRepository.findOne(userId);

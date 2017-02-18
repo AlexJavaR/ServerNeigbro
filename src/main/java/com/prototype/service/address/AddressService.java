@@ -23,4 +23,6 @@ public interface AddressService {
     Address addAddressAsHousemate(AddressData addressData, BigInteger userId);
 
     Address findAddressByPlaceId(String placeId);
+
+    AddressData updateAddressData(AddressData addressData, BigInteger userId);
 }

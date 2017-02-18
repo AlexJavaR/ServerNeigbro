@@ -69,6 +69,22 @@ public class GoogleAddressRestController {
         return new ResponseEntity<>(address, HttpStatus.CREATED);
     }
 
+    //edit address by manager
+    @PutMapping(value = "/address", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<AddressData> editAddressByManager(@RequestBody AddressData addressData) {
+        BigInteger userId = AuthorizedUser.id();
+        Address currentAddress = addressService.findOne(addressData.getAddress().getId());
+        if (currentAddress == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        AddressData updateAddressData = addressService.updateAddressData(addressData, userId);
+        if (updateAddressData == null) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        return new ResponseEntity<>(updateAddressData, HttpStatus.OK);
+    }
+
     //for add address as manager or housemate
     @GetMapping(value = "/address/{placeId}")
     public ResponseEntity<Boolean> isManagerExist(@PathVariable("placeId") String placeId) {
@@ -80,5 +96,21 @@ public class GoogleAddressRestController {
         }
         boolean isManagerExist = address.isManagerExist();
         return new ResponseEntity<>(isManagerExist, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/address")
+    public ResponseEntity<List<AddressData>> findAllGoogleAddressUser() {
+        BigInteger userId = AuthorizedUser.id();
+        List<AddressData> addressData = addressService.findAll(userId);
+        return new ResponseEntity<>(addressData, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/me/address/{addressId}")
+    public ResponseEntity<Address> findGoogleAddressUser(@PathVariable("addressId") BigInteger addressId) {
+        Address address = addressService.findOne(addressId);
+        if (address == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(address, HttpStatus.OK);
     }
 }

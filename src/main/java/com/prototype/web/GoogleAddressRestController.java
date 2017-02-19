@@ -6,8 +6,6 @@ import com.prototype.model.Role;
 import com.prototype.security.AuthorizedUser;
 import com.prototype.service.address.AddressService;
 import com.prototype.service.user.UserService;
-import com.prototype.to.HousemateAddressData;
-import com.prototype.to.JsonGoogleAddress;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -73,6 +71,9 @@ public class GoogleAddressRestController {
     @PutMapping(value = "/address", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AddressData> editAddressByManager(@RequestBody AddressData addressData) {
         BigInteger userId = AuthorizedUser.id();
+        if (addressData.getAddress() == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
         Address currentAddress = addressService.findOne(addressData.getAddress().getId());
         if (currentAddress == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

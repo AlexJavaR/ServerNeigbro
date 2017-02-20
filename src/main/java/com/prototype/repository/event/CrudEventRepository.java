@@ -23,7 +23,6 @@ public interface CrudEventRepository extends MongoRepository<Event, BigInteger> 
     List<ApartmentEvent> findAllPersonalEventOfApartment(ObjectId objectAddressId, String apartment);
 
     @Query(value = "{'$or':[{'address.$id' : ?0, 'apartment' : ?1, 'personal' : true}, {'address.$id' : ?0, 'apartment' : null, 'personal' : false}, {'address.$id' : null}]}")
-        //@Query(value = "{'address.$id' : ?0, 'apartment' : ?1, 'personal' : true}")
     List<Event> findGeneralEventsOfAddress(ObjectId objectAddressId, String apartment);
 
     @Query(value = "{'address.$id' : ?0, 'apartment' : ?1, 'personal' : true, 'settled' : false}") // only unsettled bills
@@ -35,7 +34,6 @@ public interface CrudEventRepository extends MongoRepository<Event, BigInteger> 
     @Query(value = "{'_class' : 'com.prototype.model.event.payment.ManagerPaymentEvent', 'address.$id' : ?0, 'personal' : false}")
     List<ManagerPaymentEvent> findAllManagerPaymentEvent(ObjectId objectAddressId);
 
-    //@Query(value = "{'_class' : 'com.prototype.model.event.report.GeneratedReportEvent', 'address.$id' : ?0}")
     @Query(value = "{'$or':[{'_class' : 'com.prototype.model.event.report.GeneratedReportEvent'}, {'_class' : 'com.prototype.model.event.report.UploadReportEvent'}], 'address.$id' : ?0}")
     List<ReportEvent> findAllReportOfAddress(ObjectId objectAddressId);
 

@@ -2,6 +2,7 @@ package com.prototype.web.payment;
 
 import com.prototype.model.Address;
 import com.prototype.model.event.ApartmentEvent;
+import com.prototype.model.event.payment.BillEvent;
 import com.prototype.model.event.payment.HousemateCashPaymentEvent;
 import com.prototype.model.event.payment.ManagerPaymentEvent;
 import com.prototype.model.event.payment.MonthlyBillEvent;
@@ -83,13 +84,14 @@ public class ManagerRestController {
 
     //Pay single bill of apartment with cash - DONE
     @PutMapping(value = "/cash", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<HousemateCashPaymentEvent> payCashSingleBillOfApartment(@RequestBody HousemateBillPayment housemateBillPayment) {
+    public ResponseEntity<BillEvent> payCashSingleBillOfApartment(@RequestBody HousemateBillPayment housemateBillPayment) {
         BigInteger managerId = AuthorizedUser.id();
-        HousemateCashPaymentEvent housemateCashPaymentEvent = paymentService.payCashSingleBillOfApartment(managerId, housemateBillPayment.getAddressId(), housemateBillPayment.getApartment(), housemateBillPayment.getBillId());
-        if (housemateCashPaymentEvent == null) {
+        BillEvent billEvent = paymentService.payCashSingleBillOfApartment(managerId, housemateBillPayment.getAddressId(),
+                housemateBillPayment.getApartment(), housemateBillPayment.getBillId(), housemateBillPayment.getPartAmount());
+        if (billEvent == null) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
-        return new ResponseEntity<>(housemateCashPaymentEvent, HttpStatus.OK);
+        return new ResponseEntity<>(billEvent, HttpStatus.OK);
     }
 
     //Get amount debt and all bills of single apartment - DONE

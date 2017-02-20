@@ -8,11 +8,14 @@ public class HousemateBillPayment {
     private final BigInteger addressId;
     private final String apartment;
     private final BigInteger billId;
+    private final Integer partAmount;
 
-    public HousemateBillPayment(@JsonProperty("addressId") BigInteger addressId, @JsonProperty("apartment") String apartment, @JsonProperty("billId") BigInteger billId) {
+    public HousemateBillPayment(@JsonProperty("addressId") BigInteger addressId, @JsonProperty("apartment") String apartment,
+                                @JsonProperty("billId") BigInteger billId, @JsonProperty("partAmount") Integer partAmount) {
         this.addressId = addressId;
         this.apartment = apartment;
         this.billId = billId;
+        this.partAmount = partAmount;
     }
 
     public BigInteger getAddressId() {
@@ -25,5 +28,9 @@ public class HousemateBillPayment {
 
     public BigInteger getBillId() {
         return billId;
+    }
+
+    public Integer getPartAmount() {
+        return partAmount;
     }
 }

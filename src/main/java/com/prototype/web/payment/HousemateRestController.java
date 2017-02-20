@@ -1,6 +1,7 @@
 package com.prototype.web.payment;
 
 import com.prototype.model.event.ApartmentEvent;
+import com.prototype.model.event.payment.BillEvent;
 import com.prototype.model.event.payment.HousematePayPalPaymentEvent;
 import com.prototype.security.AuthorizedUser;
 import com.prototype.service.payment.PaymentService;
@@ -30,8 +31,7 @@ public class HousemateRestController {
     public ResponseEntity<HousematePayPalPaymentEvent> payPalAllBillsOfApartment(@RequestBody HousemateBillPayment housemateBillPayment) {
         BigInteger userId = AuthorizedUser.id();
         HousematePayPalPaymentEvent housematePayPalPaymentEvent = paymentService.payPalAllBillsOfApartment(userId, housemateBillPayment.getAddressId(), housemateBillPayment.getApartment());
-        if (housematePayPalPaymentEvent == null)
-        {
+        if (housematePayPalPaymentEvent == null) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
         return new ResponseEntity<>(housematePayPalPaymentEvent, HttpStatus.OK);
@@ -40,15 +40,13 @@ public class HousemateRestController {
     //Pay single bill of apartment with PayPal - DONE
     //Used class from cash payment - ???
     @PutMapping(value = "/paypal", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<HousematePayPalPaymentEvent> payPalSingleBillOfApartment(@RequestBody HousemateBillPayment housemateBillPayment) {
+    public ResponseEntity<BillEvent> payPalSingleBillOfApartment(@RequestBody HousemateBillPayment housemateBillPayment) {
         BigInteger userId = AuthorizedUser.id();
-        BigInteger billId = housemateBillPayment.getBillId();
-        HousematePayPalPaymentEvent housematePayPalPaymentEvent = paymentService.payPalSingleBillOfApartment(userId, billId);
-        if (housematePayPalPaymentEvent == null)
-        {
+        BillEvent billEvent = paymentService.payPalSingleBillOfApartment(userId, housemateBillPayment.getBillId(), housemateBillPayment.getPartAmount());
+        if (billEvent == null) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
-        return new ResponseEntity<>(housematePayPalPaymentEvent, HttpStatus.OK);
+        return new ResponseEntity<>(billEvent, HttpStatus.OK);
     }
 
     //Get amount debt and all bills of single apartment - DONE

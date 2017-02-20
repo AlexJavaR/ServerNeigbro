@@ -22,7 +22,12 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<Event> findGeneralEventsOfAddress(BigInteger addressId, BigInteger userId) {
         String apartment = userRepository.findOne(userId).getApartment(addressId);
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId;
+        try {
+            objectAddressId = new ObjectId(addressId.toString(16));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
         return eventRepository.findGeneralEventsOfAddress(objectAddressId, apartment);
     }
 }

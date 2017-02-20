@@ -27,6 +27,9 @@ public class EventRestController {
     public ResponseEntity<List<Event>> findGeneralEventsOfAddress(@PathVariable("addressId") BigInteger addressId) {
         BigInteger userId = AuthorizedUser.id();
         List<Event> generalEventList = eventService.findGeneralEventsOfAddress(addressId, userId);
+        if (generalEventList == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
         return new ResponseEntity<>(generalEventList, HttpStatus.OK);
     }
 }

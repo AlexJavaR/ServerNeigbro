@@ -115,6 +115,7 @@ public class ManagerRestController {
     @GetMapping(value = "/bills/{addressId}")
     public ResponseEntity<List<ApartmentsWithDebt>> getDebtOfAllApartmentsByManager(@PathVariable("addressId") BigInteger addressId) {
         BigInteger managerId = AuthorizedUser.id();
+        if (addressId == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         Address address = addressService.findOne(addressId);
         if (address == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

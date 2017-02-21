@@ -31,6 +31,7 @@ public class AnnouncementRestController {
 
     @GetMapping(value = "/me/announcement/{addressId}")
     public ResponseEntity<List<UserAnnouncementEvent>> findAllAnnouncementsOfAddress(@PathVariable("addressId") BigInteger addressId) {
+        if (addressId == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         List<UserAnnouncementEvent> announcementEventList = eventService.findAllAnnouncementsOfAddress(addressId);
         return new ResponseEntity<>(announcementEventList, HttpStatus.OK);
     }

@@ -90,6 +90,7 @@ public class GoogleAddressRestController {
     @GetMapping(value = "/address/{placeId}")
     public ResponseEntity<Boolean> isManagerExist(@PathVariable("placeId") String placeId) {
         //TODO validate new address
+        if (placeId == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         BigInteger userId = AuthorizedUser.id();
         Address address = addressService.findAddressByPlaceId(placeId);
         if (address == null) {
@@ -108,6 +109,7 @@ public class GoogleAddressRestController {
 
     @GetMapping(value = "/me/address/{addressId}")
     public ResponseEntity<Address> findGoogleAddressUser(@PathVariable("addressId") BigInteger addressId) {
+        if (addressId == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         Address address = addressService.findOne(addressId);
         if (address == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

@@ -15,7 +15,6 @@ import com.prototype.repository.user.UserRepository;
 import com.prototype.to.ApartmentsWithDebt;
 import com.prototype.to.SingleManagerPayment;
 import org.bson.types.ObjectId;
-import org.omg.CORBA.BAD_PARAM;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -23,9 +22,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service("PaymentService")
 public class PaymentServiceImpl implements PaymentService {
@@ -38,9 +35,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Autowired
     private UserRepository userRepository;
-
-//    @Autowired
-//    private UserDao userDao;
 
     @Override
     public List<ApartmentEvent> findAllBillsOfApartment(BigInteger userId, BigInteger addressId) {
@@ -135,7 +129,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public BillEvent payPalSingleBillOfApartment(BigInteger userId, BigInteger billId, Integer partAmount) {
         BillEvent billEvent = (BillEvent) eventRepository.findOne(billId);
-        if (billEvent.isSettled()) return null;
+        if (billEvent == null || billEvent.isSettled()) return null;
         User currentUser = userRepository.findOne(userId);
         boolean addSplitPayment = false;
         AddressData addressData = userRepository.getAddressDataByAddress(currentUser, billEvent.getAddress());
@@ -309,6 +303,6 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (IllegalArgumentException e) {
             return null;
         }
-        return  objectAddressId;
+        return objectAddressId;
     }
 }

@@ -1,14 +1,9 @@
 package com.prototype.web;
 
-
 import com.prototype.model.AddressData;
-import com.prototype.model.User;
-
 import com.prototype.security.AuthorizedUser;
 import com.prototype.model.Address;
 import com.prototype.service.address.AddressService;
-import com.prototype.service.user.UserService;
-import com.prototype.to.HousemateAddressData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,10 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = AddressRestController.REST_URL, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -30,9 +22,6 @@ public class AddressRestController {
     @Autowired
     private AddressService addressService;
 
-    @Autowired
-    private UserService userService;
-
     @GetMapping(value = "/me/address")
     public ResponseEntity<List<AddressData>> findAllAddressUser() {
         BigInteger userId = AuthorizedUser.id();
@@ -42,25 +31,13 @@ public class AddressRestController {
 
     @GetMapping(value = "/me/address/{addressId}")
     public ResponseEntity<Address> findAddressUser(@PathVariable("addressId") BigInteger addressId) {
+        if (addressId == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         Address address = addressService.findOne(addressId);
         if (address == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(address, HttpStatus.OK);
     }
-
-    //for add address manager
-//    @PostMapping(value = "/address", consumes = MediaType.APPLICATION_JSON_VALUE)
-//    public ResponseEntity<Address> saveNewAddress(@RequestBody Address address) {
-//        //TODO validate new address
-//        BigInteger userId = AuthorizedUser.id();
-//        address.setListOfApartment(new ArrayList<>());
-//        User currentUser = addressService.saveNewVBAddress(address, userId);
-//        if (currentUser == null) {
-//            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-//        }
-//        return new ResponseEntity<>(address, HttpStatus.CREATED);
-//    }
 
 
     //for add housemate by invitation

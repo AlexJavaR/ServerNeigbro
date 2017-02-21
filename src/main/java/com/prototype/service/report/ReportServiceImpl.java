@@ -45,7 +45,10 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public GeneratedReportEvent createReport(BigInteger userId, BigInteger addressId, LocalDateTime startDate, LocalDateTime endDate) {
         Address currentAddress = addressRepository.findOne(addressId);
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
         GeneratedReportEvent generatedReportEvent = new GeneratedReportEvent(endDate, currentAddress);
 
         //List<ManagerPaymentEvent> listManagerPayments = eventRepository.getManagerPaymentEventBetween(objectAddressId, startDate, endDate);
@@ -103,7 +106,10 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<UploadReportEvent> findAllUploadedReportsOfAddress(BigInteger addressId, BigInteger userId) {
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
         User user = userRepository.findOne(userId);
         for (AddressData addressData : user.getAddressDataList()) {
             if (Objects.equals(addressData.getAddress().getId(), addressId)) {
@@ -116,7 +122,10 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<ReportEvent> findAllReportOfAddress(BigInteger addressId, BigInteger userId) {
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
         User currentUser = userRepository.findOne(userId);
         for (AddressData addressData : currentUser.getAddressDataList()) {
             if (Objects.equals(addressData.getAddress().getId(), addressId)) {
@@ -143,7 +152,10 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public UploadReportEvent findCurrentUploadedReportsOfAddress(BigInteger addressId, BigInteger userId, BigInteger textId) {
         User user = userRepository.findOne(userId);
-        ObjectId objectAddressId = new ObjectId((addressId.toString(16)));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
         for (AddressData addressData : user.getAddressDataList()) {
             if (Objects.equals(addressData.getAddress().getId(), addressId)) {
                 List<UploadReportEvent> uploadReportEvents = eventRepository.findAllUploadedReportEventOfAddress(objectAddressId);
@@ -169,5 +181,15 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public void deleteCurrentUploadedReport(UploadReportEvent uploadReportEvent) {
         eventRepository.delete(uploadReportEvent.getId());
+    }
+
+    public ObjectId convertBigIntegerToObjectId(BigInteger addressId) {
+        ObjectId objectAddressId;
+        try {
+            objectAddressId = new ObjectId(addressId.toString(16));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        return  objectAddressId;
     }
 }

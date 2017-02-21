@@ -52,8 +52,14 @@ public class MessageServiceImp implements MessageService {
         }
 
         if (valid) {
-            ObjectId objectAddressId = new ObjectId(addressId.toString(16));
-            ObjectId objectUserId = new ObjectId(userId.toString(16));
+            ObjectId objectAddressId;
+            ObjectId objectUserId;
+            try {
+                objectAddressId = new ObjectId(addressId.toString(16));
+                objectUserId = new ObjectId(userId.toString(16));
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
             Integer messages = messageRepository.IsMoreThen(objectAddressId, objectUserId);
             if (messages <= 100) {
                 return messageRepository.save(message);

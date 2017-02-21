@@ -30,7 +30,12 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
     @Override
     public List<UserAnnouncementEvent> findAllAnnouncementsOfAddress(BigInteger addressId) {
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId;
+        try {
+            objectAddressId = new ObjectId(addressId.toString(16));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
         return eventRepository.findAllAnnouncementsOfAddress(objectAddressId);
     }
 

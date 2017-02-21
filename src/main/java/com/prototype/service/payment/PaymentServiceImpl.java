@@ -15,6 +15,7 @@ import com.prototype.repository.user.UserRepository;
 import com.prototype.to.ApartmentsWithDebt;
 import com.prototype.to.SingleManagerPayment;
 import org.bson.types.ObjectId;
+import org.omg.CORBA.BAD_PARAM;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -43,10 +44,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public List<ApartmentEvent> findAllBillsOfApartment(BigInteger userId, BigInteger addressId) {
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
         User currentUser = userRepository.findOne(userId);
         String apartment = currentUser.getApartment(addressId);
-        if (apartment == null) {
+        if (apartment == null || objectAddressId == null) {
             return null;
         }
         return eventRepository.findAllPersonalEventOfApartment(objectAddressId, apartment);
@@ -54,7 +55,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public List<ApartmentEvent> findAllBillsOfApartmentByManager(BigInteger managerId, BigInteger addressId, String apartment) {
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
         User managerUser = userRepository.findOne(managerId);
         if (userRepository.getRoleByAddress(managerUser, addressRepository.findOne(addressId)) == Role.MANAGER) {
             return eventRepository.findAllPersonalEventOfApartment(objectAddressId, apartment);
@@ -65,7 +69,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public List<ManagerPaymentEvent> findAllManagerPaymentEvent(BigInteger managerId, BigInteger addressId) {
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
         User managerUser = userRepository.findOne(managerId);
         if (userRepository.getRoleByAddress(managerUser, addressRepository.findOne(addressId)) == Role.MANAGER) {
             return eventRepository.findAllManagerPaymentEvent(objectAddressId);
@@ -75,10 +82,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public Integer getAmountDebtOfApartment(BigInteger userId, BigInteger addressId) {
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
         User currentUser = userRepository.findOne(userId);
         String apartment = currentUser.getApartment(addressId);
-        if (apartment == null) {
+        if (apartment == null || objectAddressId == null) {
             return null;
         }
         List<BillEvent> unsettledBills = eventRepository.getAmountDebtOfApartment(objectAddressId, apartment);
@@ -91,7 +98,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public Integer getAmountDebtOfApartmentByManager(BigInteger managerId, BigInteger addressId, String apartment) {
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
         User managerUser = userRepository.findOne(managerId);
         if (userRepository.getRoleByAddress(managerUser, addressRepository.findOne(addressId)) == Role.MANAGER) {
             List<BillEvent> unsettledBills = eventRepository.getAmountDebtOfApartment(objectAddressId, apartment);
@@ -172,7 +182,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public HousematePayPalPaymentEvent payPalAllBillsOfApartment(BigInteger userId, BigInteger addressId, String apartment) {
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
         Address address = addressRepository.findOne(addressId);
         Integer amount = 0;
         List<BillEvent> listUnsettledBills = eventRepository.getAmountDebtOfApartment(objectAddressId, apartment);
@@ -224,7 +237,10 @@ public class PaymentServiceImpl implements PaymentService {
         User managerUser = userRepository.findOne(managerId);
         Address address = addressRepository.findOne(addressId);
         Integer amount = 0;
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
         List<BillEvent> listUnsettledBills = eventRepository.getAmountDebtOfApartment(objectAddressId, apartment);
         if (userRepository.getRoleByAddress(managerUser, address) == Role.MANAGER) {
             for (BillEvent billEvent : listUnsettledBills) {
@@ -284,5 +300,15 @@ public class PaymentServiceImpl implements PaymentService {
                 eventRepository.save(new MonthlyBillEvent(currentDate, address, apartment, address.getMonthlyFee(), false));
             }
         });
+    }
+
+    public ObjectId convertBigIntegerToObjectId(BigInteger addressId) {
+        ObjectId objectAddressId;
+        try {
+            objectAddressId = new ObjectId(addressId.toString(16));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        return  objectAddressId;
     }
 }

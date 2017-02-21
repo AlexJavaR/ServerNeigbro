@@ -9,6 +9,7 @@ import com.prototype.model.event.report.ReportEvent;
 import com.prototype.model.event.report.UploadReportEvent;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigInteger;
@@ -40,17 +41,20 @@ public class EventRepositoryImpl implements EventRepository {
 
     @Override
     public List<UserAnnouncementEvent> findAllAnnouncementsOfAddress(ObjectId objectAddressId) {
-        return crudEventRepository.findAllAnnouncementsOfAddress(objectAddressId);
+        return crudEventRepository.findAllAnnouncementsOfAddress(objectAddressId, new Sort(Sort.Direction.DESC, "dateEvent"));
     }
 
     @Override
     public List<ApartmentEvent> findAllPersonalEventOfApartment(ObjectId objectAddressId, String apartment) {
-        return crudEventRepository.findAllPersonalEventOfApartment(objectAddressId, apartment);
+        return crudEventRepository.findAllPersonalEventOfApartment(objectAddressId, apartment, new Sort(Sort.Direction.DESC, "dateEvent"));
     }
 
     @Override
     public List<Event> findGeneralEventsOfAddress(ObjectId objectAddressId, String apartment) {
-        return crudEventRepository.findGeneralEventsOfAddress(objectAddressId, apartment);
+        //List<Event> generalEventsOfAddress = crudEventRepository.findGeneralEventsOfAddress(objectAddressId, apartment);
+        //Collections.sort(generalEventsOfAddress, (o1, o2) -> o2.getDateEvent().compareTo(o1.getDateEvent()));
+        return crudEventRepository.findGeneralEventsOfAddress(objectAddressId, apartment, new Sort(Sort.Direction.DESC, "dateEvent"));
+        //return eventDao.findGeneralEventsOfAddress(objectAddressId, apartment);
     }
 
     @Override
@@ -65,16 +69,16 @@ public class EventRepositoryImpl implements EventRepository {
 
     @Override
     public List<ManagerPaymentEvent> findAllManagerPaymentEvent(ObjectId objectAddressId) {
-        return crudEventRepository.findAllManagerPaymentEvent(objectAddressId);
+        return crudEventRepository.findAllManagerPaymentEvent(objectAddressId, new Sort(Sort.Direction.DESC, "dateEvent"));
     }
 
     @Override
     public List<ReportEvent> findAllReportOfAddress(ObjectId objectAddressId) {
-        return crudEventRepository.findAllReportOfAddress(objectAddressId);
+        return crudEventRepository.findAllReportOfAddress(objectAddressId, new Sort(Sort.Direction.DESC, "dateEvent"));
     }
 
     @Override
     public List<UploadReportEvent> findAllUploadedReportEventOfAddress(ObjectId objectAddressId) {
-        return crudEventRepository.findAllUploadedReportEventOfAddress(objectAddressId);
+        return crudEventRepository.findAllUploadedReportEventOfAddress(objectAddressId, new Sort(Sort.Direction.DESC, "dateEvent"));
     }
 }

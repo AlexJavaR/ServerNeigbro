@@ -28,7 +28,8 @@ public interface MessageRepository extends MongoRepository<Message, BigInteger> 
     @Query(value = "{'address.$id' : ?0}")
     List<Message> findByAddressId(ObjectId addressId);
 
-    List<Message> findByAddressAndIdGreaterThan(@Param("address.$id") Address address, @Param("Id") ObjectId Id);
+    //List<Message> findByAddressAndIdGreaterThan(@Param("address.$id") Address address, @Param("Id") ObjectId Id);
+    List<Message> findByAddressAndIdGreaterThan(Address address, ObjectId messageId);
 
 }
 //

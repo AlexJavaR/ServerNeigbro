@@ -100,6 +100,17 @@ public class GoogleAddressRestController {
         return new ResponseEntity<>(isManagerExist, HttpStatus.OK);
     }
 
+    //for add address as manager or housemate
+    @GetMapping(value = "/{placeId}")
+    public ResponseEntity<Address> isAddressExist(@PathVariable("placeId") String placeId) {
+        if (placeId == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        Address address = addressService.findAddressByPlaceId(placeId);
+        if (address == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(address, HttpStatus.OK);
+    }
+
     @GetMapping(value = "/address")
     public ResponseEntity<List<AddressData>> findAllGoogleAddressUser() {
         BigInteger userId = AuthorizedUser.id();

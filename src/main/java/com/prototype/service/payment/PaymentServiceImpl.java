@@ -85,7 +85,7 @@ public class PaymentServiceImpl implements PaymentService {
         List<BillEvent> unsettledBills = eventRepository.getAmountDebtOfApartment(objectAddressId, apartment);
         Integer amountDebt = 0;
         for (BillEvent bill : unsettledBills) {
-            amountDebt += bill.getBill();
+            amountDebt += bill.getBalanceBill();
         }
         return amountDebt;
     }
@@ -101,7 +101,7 @@ public class PaymentServiceImpl implements PaymentService {
             List<BillEvent> unsettledBills = eventRepository.getAmountDebtOfApartment(objectAddressId, apartment);
             Integer amountDebt = 0;
             for (BillEvent bill : unsettledBills) {
-                amountDebt += bill.getBill();
+                amountDebt += bill.getBalanceBill();
             }
             return amountDebt;
         }
@@ -134,6 +134,7 @@ public class PaymentServiceImpl implements PaymentService {
         boolean addSplitPayment = false;
         AddressData addressData = userRepository.getAddressDataByAddress(currentUser, billEvent.getAddress());
         if (addressData.getAddress().equals(billEvent.getAddress()) && addressData.getApartment().equals(billEvent.getApartment())) {
+            if (billEvent.getBalanceBill() == null) billEvent.setBalanceBill(billEvent.getBill());
             if (billEvent.getBalanceBill() <= partAmount) {
                 billEvent.setSettled(true);
                 partAmount = billEvent.getBalanceBill();
@@ -188,9 +189,9 @@ public class PaymentServiceImpl implements PaymentService {
                 for (BillEvent billEvent : listUnsettledBills) {
                     billEvent.setSettled(true);
                     eventRepository.save(billEvent);
-                    address.setFundAddress(address.getFundAddress() + billEvent.getBill());
-                    address.setAccountBalance(address.getAccountBalance() + billEvent.getBill());
-                    amount += billEvent.getBill();
+                    address.setFundAddress(address.getFundAddress() + billEvent.getBalanceBill());
+                    address.setAccountBalance(address.getAccountBalance() + billEvent.getBalanceBill());
+                    amount += billEvent.getBalanceBill();
                 }
                 addressRepository.save(address);
                 HousematePayPalPaymentEvent housematePayPalPaymentEvent = new HousematePayPalPaymentEvent(LocalDateTime.now(), address, apartment, amount);
@@ -208,6 +209,7 @@ public class PaymentServiceImpl implements PaymentService {
         BillEvent billEvent = (BillEvent) eventRepository.findOne(billId);
         if (billEvent.isSettled()) return null;
         if (userRepository.getRoleByAddress(managerUser, address) == Role.MANAGER && billEvent.getApartment().equals(apartment)) {
+            if (billEvent.getBalanceBill() == null) billEvent.setBalanceBill(billEvent.getBill());
             if (billEvent.getBalanceBill() <= partAmount) {
                 billEvent.setSettled(true);
                 partAmount = billEvent.getBalanceBill();
@@ -240,7 +242,7 @@ public class PaymentServiceImpl implements PaymentService {
             for (BillEvent billEvent : listUnsettledBills) {
                 billEvent.setSettled(true);
                 eventRepository.save(billEvent);
-                amount += billEvent.getBill();
+                amount += billEvent.getBalanceBill();
             }
             address.setFundAddress(address.getFundAddress() + amount);
             addressRepository.save(address);

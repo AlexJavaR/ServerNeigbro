@@ -1,18 +1,13 @@
 package com.prototype.service.address;
 
-import com.prototype.model.*;
 import com.prototype.repository.address.AddressRepository;
 import com.prototype.repository.user.UserRepository;
-import com.prototype.to.HousemateAddressData;
-import com.prototype.to.JsonGoogleAddress;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.geo.Point;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import com.prototype.model.Address;
 import com.prototype.model.AddressData;
@@ -90,12 +85,15 @@ public class AddressServiceImpl implements AddressService {
             addressRepository.update(currentAddress);
             return currentAddressData;
         } else if (addressData.getRole().equals(Role.HOUSEMATE)) {
-            if (currentAddress.getListOfApartment().contains(addressData.getApartment())) {
+            if (currentAddress.isManagerExist() && currentAddress.getListOfApartment().contains(addressData.getApartment())) {
                 currentAddressData.setTitle(addressData.getTitle() != null ? addressData.getTitle() : currentAddressData.getTitle());
                 currentAddressData.setApartment(addressData.getApartment() != null ? addressData.getApartment() : currentAddressData.getApartment());
-                userRepository.save(currentUser);
-                return currentAddressData;
-            }
+            } else if (!currentAddress.isManagerExist()) {
+                currentAddressData.setTitle(addressData.getTitle() != null ? addressData.getTitle() : currentAddressData.getTitle());
+                currentAddressData.setApartment(addressData.getApartment() != null ? addressData.getApartment() : currentAddressData.getApartment());
+            } else return null;
+            userRepository.save(currentUser);
+            return currentAddressData;
         }
         return null;
     }

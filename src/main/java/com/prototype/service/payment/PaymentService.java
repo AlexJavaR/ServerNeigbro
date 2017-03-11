@@ -1,25 +1,21 @@
 package com.prototype.service.payment;
 
 import com.prototype.model.event.ApartmentEvent;
-import com.prototype.model.event.payment.BillEvent;
-import com.prototype.model.event.payment.HousemateCashPaymentEvent;
-import com.prototype.model.event.payment.HousematePayPalPaymentEvent;
-import com.prototype.model.event.payment.ManagerPaymentEvent;
+import com.prototype.model.event.payment.*;
 import com.prototype.to.ApartmentsWithDebt;
 import com.prototype.to.SingleManagerPayment;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Map;
 
 public interface PaymentService {
     ManagerPaymentEvent addSinglePayment(BigInteger userId, SingleManagerPayment singleManagerPayment);
 
-    List<ApartmentEvent> findAllBillsOfApartment(BigInteger userId, BigInteger addressId);
+    List<ApartmentEvent> findAllBillsOfApartment(BigInteger userId, BigInteger addressId, String apartment);
 
     List<ApartmentEvent> findAllBillsOfApartmentByManager(BigInteger managerId, BigInteger addressId, String apartment);
 
-    Integer getAmountDebtOfApartment(BigInteger userId, BigInteger addressId);
+    Integer getAmountDebtOfApartment(BigInteger userId, BigInteger addressId, String apartment);
 
     Integer getAmountDebtOfApartmentByManager(BigInteger managerId, BigInteger addressId, String apartment);
 
@@ -36,4 +32,12 @@ public interface PaymentService {
     void createMonthlyBillForAllApartment();
 
     List<ApartmentsWithDebt> getDebtOfAllApartmentsByManager(BigInteger managerId, BigInteger addressId);
+
+    MonthlyBillEvent createMonthlyBillForAddress(BigInteger addressId, BigInteger managerId);
+
+    BillEvent setStatusBillInProcess(BigInteger userId, BigInteger billId);
+
+    Boolean getStatusBill(BigInteger userId, BigInteger billId);
+
+    BillEvent changeStatusBill(BigInteger billId);
 }

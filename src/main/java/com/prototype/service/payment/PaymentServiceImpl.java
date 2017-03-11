@@ -5,10 +5,8 @@ import com.prototype.model.AddressData;
 import com.prototype.model.Role;
 import com.prototype.model.User;
 import com.prototype.model.event.ApartmentEvent;
+import com.prototype.model.event.Event;
 import com.prototype.model.event.payment.*;
-import com.prototype.model.event.payment.split.CashSplitPaymentEvent;
-import com.prototype.model.event.payment.split.PayPalSplitPaymentEvent;
-import com.prototype.model.event.payment.split.SplitPaymentEvent;
 import com.prototype.repository.address.AddressRepository;
 import com.prototype.repository.event.EventRepository;
 import com.prototype.repository.user.UserRepository;
@@ -16,9 +14,10 @@ import com.prototype.to.ApartmentsWithDebt;
 import com.prototype.to.SingleManagerPayment;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.swing.*;
+import java.awt.event.ActionListener;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,10 +36,8 @@ public class PaymentServiceImpl implements PaymentService {
     private UserRepository userRepository;
 
     @Override
-    public List<ApartmentEvent> findAllBillsOfApartment(BigInteger userId, BigInteger addressId) {
+    public List<ApartmentEvent> findAllBillsOfApartment(BigInteger userId, BigInteger addressId, String apartment) {
         ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
-        User currentUser = userRepository.findOne(userId);
-        String apartment = currentUser.getApartment(addressId);
         if (apartment == null || objectAddressId == null) {
             return null;
         }
@@ -75,10 +72,8 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public Integer getAmountDebtOfApartment(BigInteger userId, BigInteger addressId) {
+    public Integer getAmountDebtOfApartment(BigInteger userId, BigInteger addressId, String apartment) {
         ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
-        User currentUser = userRepository.findOne(userId);
-        String apartment = currentUser.getApartment(addressId);
         if (apartment == null || objectAddressId == null) {
             return null;
         }
@@ -127,49 +122,78 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    public BillEvent setStatusBillInProcess(BigInteger userId, BigInteger billId) {
+        User currentUser = userRepository.findOne(userId);
+        BillEvent billEvent = (BillEvent) eventRepository.findOne(billId);
+        if (currentUser == null || billEvent == null) {
+            return null;
+        }
+        if (userRepository.getAddressData(currentUser, billEvent.getAddress(), billEvent.getApartment()) != null && !billEvent.isProcessed()) {
+            billEvent.setProcessed(true);
+            ActionListener taskPerformer = e -> {
+                if (billEvent.isProcessed()) {
+                    billEvent.setProcessed(false);
+                    eventRepository.save(billEvent);
+                }
+            };
+            Timer timer = new Timer(1800000, taskPerformer);
+            timer.start();
+            timer.setRepeats(false);
+            return eventRepository.save(billEvent);
+        } else {
+            return null;
+        }
+    }
+
+    //delete this method
+    @Override
+    public BillEvent changeStatusBill(BigInteger billId) {
+        Event event = eventRepository.findOne(billId);
+        BillEvent billEvent = (BillEvent) event;
+        if (billEvent == null) {
+            return null;
+        }
+        billEvent.setProcessed(false);
+        return eventRepository.save(billEvent);
+    }
+
+    @Override
+    public Boolean getStatusBill(BigInteger userId, BigInteger billId) {
+        User currentUser = userRepository.findOne(userId);
+        BillEvent billEvent = (BillEvent) eventRepository.findOne(billId);
+        if (currentUser == null || billEvent == null) {
+            return null;
+        }
+        if (userRepository.getAddressData(currentUser, billEvent.getAddress(), billEvent.getApartment()) != null) {
+            return billEvent.isProcessed();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
     public BillEvent payPalSingleBillOfApartment(BigInteger userId, BigInteger billId, Integer partAmount) {
         BillEvent billEvent = (BillEvent) eventRepository.findOne(billId);
         if (billEvent == null || billEvent.isSettled()) return null;
         User currentUser = userRepository.findOne(userId);
-        boolean addSplitPayment = false;
-        AddressData addressData = userRepository.getAddressDataByAddress(currentUser, billEvent.getAddress());
+        AddressData addressData = userRepository.getAddressData(currentUser, billEvent.getAddress(), billEvent.getApartment());
         if (addressData.getAddress().equals(billEvent.getAddress()) && addressData.getApartment().equals(billEvent.getApartment())) {
             if (billEvent.getBalanceBill() == null) billEvent.setBalanceBill(billEvent.getBill());
             if (billEvent.getBalanceBill() <= partAmount) {
                 billEvent.setSettled(true);
                 partAmount = billEvent.getBalanceBill();
             }
-            if (!billEvent.getListSplitPayment().isEmpty()) {
-                for (SplitPaymentEvent payment : billEvent.getListSplitPayment()) {
-                    if (payment.getAuthor().getId().equals(userId)) {
-                        payment.setAmount(payment.getAmount() + partAmount);
-                        addSplitPayment = true;
-                        billEvent.setBalanceBill(billEvent.getBalanceBill() - partAmount);
-                    }
-                }
-//                billEvent.getListSplitPayment().stream().filter(payment -> payment.getAuthor().getId().equals(userId))
-//                        .forEach(payment -> payment.setAmount(payment.getAmount() + finalPartAmount));
-            }
-            if (!addSplitPayment) {
-                PayPalSplitPaymentEvent payPalSplitPaymentEvent = new PayPalSplitPaymentEvent(LocalDateTime.now(), currentUser, partAmount);
-                billEvent.getListSplitPayment().add(payPalSplitPaymentEvent);
-                billEvent.setBalanceBill(billEvent.getBalanceBill() - partAmount);
-            }
-
-            HousematePayPalPaymentEvent housematePayPalPaymentEvent = new HousematePayPalPaymentEvent(LocalDateTime.now(),
-                    addressData.getAddress(), addressData.getApartment(), partAmount);
+            billEvent.setBalanceBill(billEvent.getBalanceBill() - partAmount);
+            HousematePayPalPaymentEvent housematePayPalPaymentEvent = new HousematePayPalPaymentEvent(LocalDateTime.now(), billEvent.getAddress(), billEvent.getApartment(), partAmount, currentUser);
             housematePayPalPaymentEvent.getListSettledBills().add(billEvent);
-            eventRepository.save(housematePayPalPaymentEvent);
+            housematePayPalPaymentEvent = eventRepository.save(housematePayPalPaymentEvent);
+            billEvent.getListHousematePayment().add(housematePayPalPaymentEvent);
 
             Address address = addressData.getAddress();
             address.setFundAddress(address.getFundAddress() + partAmount);
             address.setAccountBalance(address.getAccountBalance() + partAmount);
-//                if (billEvent.getClass().getSimpleName().equals("SingleBillEvent")) {
-//                    address.setAccountBalance(address.getAccountBalance() + billEvent.getBill());
-//                } else if (billEvent.getClass().getSimpleName().equals("MonthlyBillEvent")) {
-//                    address.setFundAddress(address.getFundAddress() + billEvent.getBill());
-//                }
             addressRepository.save(address);
+            billEvent.setProcessed(false);
             return eventRepository.save(billEvent);
         }
         return null;
@@ -178,6 +202,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public HousematePayPalPaymentEvent payPalAllBillsOfApartment(BigInteger userId, BigInteger addressId, String apartment) {
         ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        User currentUser = userRepository.findOne(userId);
         if (objectAddressId == null) {
             return null;
         }
@@ -194,7 +219,7 @@ public class PaymentServiceImpl implements PaymentService {
                     amount += billEvent.getBalanceBill();
                 }
                 addressRepository.save(address);
-                HousematePayPalPaymentEvent housematePayPalPaymentEvent = new HousematePayPalPaymentEvent(LocalDateTime.now(), address, apartment, amount);
+                HousematePayPalPaymentEvent housematePayPalPaymentEvent = new HousematePayPalPaymentEvent(LocalDateTime.now(), address, apartment, amount, currentUser);
                 housematePayPalPaymentEvent.setListSettledBills(listUnsettledBills);
                 return eventRepository.save(housematePayPalPaymentEvent);
             }
@@ -214,16 +239,15 @@ public class PaymentServiceImpl implements PaymentService {
                 billEvent.setSettled(true);
                 partAmount = billEvent.getBalanceBill();
             }
-            CashSplitPaymentEvent cashSplitPaymentEvent = new CashSplitPaymentEvent(LocalDateTime.now(), null, partAmount);
-            billEvent.getListSplitPayment().add(cashSplitPaymentEvent);
             billEvent.setBalanceBill(billEvent.getBalanceBill() - partAmount);
-            eventRepository.save(billEvent);
-            address.setFundAddress(address.getFundAddress() + partAmount);
-            addressRepository.save(address);
             HousemateCashPaymentEvent housemateCashPaymentEvent = new HousemateCashPaymentEvent(LocalDateTime.now(), address, apartment, partAmount);
             housemateCashPaymentEvent.getListSettledBills().add(billEvent);
-            eventRepository.save(housemateCashPaymentEvent);
-            return billEvent;
+            housemateCashPaymentEvent = eventRepository.save(housemateCashPaymentEvent);
+            billEvent.getListHousematePayment().add(housemateCashPaymentEvent);
+            address.setFundAddress(address.getFundAddress() + partAmount);
+            addressRepository.save(address);
+            billEvent.setProcessed(false);
+            return eventRepository.save(billEvent);
         }
         return null;
     }
@@ -286,7 +310,23 @@ public class PaymentServiceImpl implements PaymentService {
         eventRepository.save(new SingleBillEvent(LocalDateTime.now(), address, apartment, amount, false, paymentEvent));
     }
 
-    @Scheduled(cron = "0 0 12 1 * ?")
+    @Override
+    public MonthlyBillEvent createMonthlyBillForAddress(BigInteger addressId, BigInteger managerId) {
+        Address currentAddress = addressRepository.findOne(addressId);
+        User currentUser = userRepository.findOne(managerId);
+        if (userRepository.getRoleByAddress(currentUser, currentAddress).equals(Role.MANAGER) && currentAddress.isManagerExist()) {
+            currentAddress.setLatestGeneratedMonthlyFee(LocalDateTime.now());
+            for (String apartment : currentAddress.getListOfApartment()) {
+                eventRepository.save(new MonthlyBillEvent(LocalDateTime.now(), currentAddress, apartment, currentAddress.getMonthlyFee(), false));
+            }
+        } else {
+            return null;
+        }
+        addressRepository.update(currentAddress);
+        return new MonthlyBillEvent(LocalDateTime.now(), currentAddress, null, currentAddress.getMonthlyFee(), false);
+    }
+
+    //@Scheduled(cron = "0 0 12 1 * ?")
     @Override
     public void createMonthlyBillForAllApartment() {
         LocalDateTime currentDate = LocalDateTime.now();

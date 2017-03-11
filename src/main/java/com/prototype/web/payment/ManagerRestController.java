@@ -6,11 +6,13 @@ import com.prototype.model.event.payment.BillEvent;
 import com.prototype.model.event.payment.HousemateCashPaymentEvent;
 import com.prototype.model.event.payment.ManagerPaymentEvent;
 import com.prototype.model.event.payment.MonthlyBillEvent;
+import com.prototype.repository.event.EventRepository;
 import com.prototype.security.AuthorizedUser;
 import com.prototype.service.address.AddressService;
 import com.prototype.service.payment.PaymentService;
 import com.prototype.to.ApartmentsWithDebt;
 import com.prototype.to.HousemateBillPayment;
+import com.prototype.to.MonthlyFeeForAddress;
 import com.prototype.to.SingleManagerPayment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,11 +37,17 @@ public class ManagerRestController {
     @Autowired
     private AddressService addressService;
 
-    @GetMapping(value = "/monthly")
-    public ResponseEntity<MonthlyBillEvent> createMonthleBills() {
-        paymentService.createMonthlyBillForAllApartment();
-
-        return new ResponseEntity<>(HttpStatus.OK);
+    @PostMapping(value = "/me/payment/monthly", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Address> createMonthleFeeForAddress(@RequestBody MonthlyFeeForAddress monthlyFeeForAddress) {
+        BigInteger managerId = AuthorizedUser.id();
+        BigInteger addressId = monthlyFeeForAddress.getAddressId();
+        if (addressId == null || addressService.findOne(addressId) == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        MonthlyBillEvent monthlyBillEvent = paymentService.createMonthlyBillForAddress(addressId, managerId);
+        if (monthlyBillEvent == null) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        Address currentAddress = addressService.findOne(addressId);
+        return new ResponseEntity<>(currentAddress, HttpStatus.CREATED);
     }
 
 

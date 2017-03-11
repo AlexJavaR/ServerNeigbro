@@ -13,7 +13,6 @@ public class GeneratedReportEvent extends ReportEvent{
 
     public GeneratedReportEvent(LocalDateTime dateEvent, Address address) {
         super(dateEvent, address);
-        setPersonal(false);
     }
     public List<ManagerPaymentEvent> getListManagerPayments() {
         return listManagerPayments;

@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
 @Document(collection = "Event")
-public abstract class AddressEvent extends Event
+public abstract class AddressEvent extends GlobalEvent
 {
 	@DBRef(lazy = true)
 	private Address address;

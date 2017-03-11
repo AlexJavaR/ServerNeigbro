@@ -2,10 +2,10 @@ package com.prototype.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,12 +23,13 @@ public class Address extends BaseEntity {
     private Integer fundAddress;
     private Integer accountBalance;
     private boolean managerExist;
+    private LocalDateTime latestGeneratedMonthlyFee;
 
     public Address() {
     }
 
-    public Address(BigInteger id, String className, String title, GoogleAddress googleAddress, String entrance, Integer firstApartment,
-                   Integer lastApartment, Integer monthlyFee, String phoneNumber, Integer fundAddress, Integer accountBalance) {
+    public Address(BigInteger id, String className, String title, GoogleAddress googleAddress, String entrance, Integer firstApartment, Integer lastApartment,
+                   Integer monthlyFee, String phoneNumber, Integer fundAddress, Integer accountBalance, LocalDateTime latestGeneratedMonthlyFee) {
         super(id, className);
         this.title = title;
         this.googleAddress = googleAddress;
@@ -41,6 +42,7 @@ public class Address extends BaseEntity {
         this.fundAddress = fundAddress;
         this.accountBalance = accountBalance;
         setManagerExist(false);
+        this.latestGeneratedMonthlyFee = latestGeneratedMonthlyFee;
     }
 
     public GoogleAddress getGoogleAddress() {
@@ -130,5 +132,13 @@ public class Address extends BaseEntity {
 
     public void setManagerExist(boolean managerExist) {
         this.managerExist = managerExist;
+    }
+
+    public LocalDateTime getLatestGeneratedMonthlyFee() {
+        return latestGeneratedMonthlyFee;
+    }
+
+    public void setLatestGeneratedMonthlyFee(LocalDateTime latestGeneratedMonthlyFee) {
+        this.latestGeneratedMonthlyFee = latestGeneratedMonthlyFee;
     }
 }

@@ -69,7 +69,7 @@ public class GoogleAddressRestController {
 
     //edit address by manager
     @PutMapping(value = "/address", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<AddressData> editAddressByManager(@RequestBody AddressData addressData) {
+    public ResponseEntity<AddressData> editAddress(@RequestBody AddressData addressData) {
         BigInteger userId = AuthorizedUser.id();
         if (addressData.getAddress() == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

@@ -32,21 +32,21 @@ public class MessageRestController {
     @Autowired
     private AddressService addressService;
 
-    @PostMapping(value = "/me/chat/{addressId}/{number}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Message>> createMessage(@PathVariable("addressId") BigInteger addressId, @PathVariable("number") BigInteger number, @RequestBody UserMessage message) {
-        if (message == null)
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        if (addressId == null || number == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        BigInteger userId = AuthorizedUser.id();
-        User user = userService.findOne(userId);
-        Address address = addressService.findOne(addressId);
-        Message message1 = new Message(LocalDateTime.now(), user, address, message.getMessage());
-        messageService.save(message1, addressId, userId);
-        List<Message> messageList = messageService.findByAddressAndIdGreaterThan(address, addressId);
-        return new ResponseEntity<>(messageList, HttpStatus.OK);
-    }
+//    @PostMapping(value = "/me/chat/{addressId}/{number}", consumes = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<List<Message>> createMessage(@PathVariable("addressId") BigInteger addressId, @PathVariable("number") BigInteger number, @RequestBody UserMessage message) {
+//        if (message == null)
+//            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+//        if (addressId == null || number == null) {
+//            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//        }
+//        BigInteger userId = AuthorizedUser.id();
+//        User user = userService.findOne(userId);
+//        Address address = addressService.findOne(addressId);
+//        Message message1 = new Message(LocalDateTime.now(), user, address, message.getMessage());
+//        messageService.save(message1, addressId, userId);
+//        List<Message> messageList = messageService.findByAddressAndIdGreaterThan(address, addressId);
+//        return new ResponseEntity<>(messageList, HttpStatus.OK);
+//    }
 
     @GetMapping("/me/chat/{addressId}/{messageId}")
     public ResponseEntity<List<Message>> findAllFromId(@PathVariable("addressId") BigInteger addressId, @PathVariable("messageId") BigInteger messageId) {

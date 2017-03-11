@@ -1,5 +1,5 @@
 package com.prototype.model.event.payment;
-
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.prototype.model.Address;
 import com.prototype.model.event.ApartmentEvent;
 import org.springframework.data.mongodb.core.mapping.DBRef;
@@ -10,7 +10,8 @@ import java.util.List;
 
 public abstract class HousematePaymentEvent extends ApartmentEvent {
 
-    @DBRef
+    @DBRef(lazy = true)
+    @JsonBackReference
     private List<BillEvent> listSettledBills;
     private Integer amount;
 
@@ -18,6 +19,7 @@ public abstract class HousematePaymentEvent extends ApartmentEvent {
         super(dateEvent, address, apartment);
         this.listSettledBills = new ArrayList<>();
         this.amount = amount;
+        setPersonal(true);
     }
 
     public List<BillEvent> getListSettledBills() {

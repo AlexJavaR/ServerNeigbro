@@ -1,8 +1,9 @@
 package com.prototype.model.event.payment;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.prototype.model.Address;
 import com.prototype.model.event.ApartmentEvent;
-import com.prototype.model.event.payment.split.SplitPaymentEvent;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -12,14 +13,19 @@ public abstract class BillEvent extends ApartmentEvent {
     private Integer bill;
     private Integer balanceBill;
     private boolean settled;
-    private List<SplitPaymentEvent> listSplitPayment;
+    private boolean processed;
+
+    @DBRef(lazy = true)
+    @JsonManagedReference
+    private List<HousematePaymentEvent> listHousematePayment;
 
     public BillEvent(LocalDateTime dateEvent, Address address, String apartment, Integer bill, boolean settled) {
         super(dateEvent, address, apartment);
         this.bill = bill;
         this.balanceBill = bill;
         this.settled = settled;
-        this.listSplitPayment = new ArrayList<>();
+        this.listHousematePayment = new ArrayList<>();
+        setProcessed(false);
     }
 
     public boolean isSettled() {
@@ -46,11 +52,19 @@ public abstract class BillEvent extends ApartmentEvent {
         this.balanceBill = balanceBill;
     }
 
-    public List<SplitPaymentEvent> getListSplitPayment() {
-        return listSplitPayment;
+    public List<HousematePaymentEvent> getListHousematePayment() {
+        return listHousematePayment;
     }
 
-    public void setListSplitPayment(List<SplitPaymentEvent> listSplitPayment) {
-        this.listSplitPayment = listSplitPayment;
+    public void setListHousematePayment(List<HousematePaymentEvent> listHousematePayment) {
+        this.listHousematePayment = listHousematePayment;
+    }
+
+    public boolean isProcessed() {
+        return processed;
+    }
+
+    public void setProcessed(boolean processed) {
+        this.processed = processed;
     }
 }

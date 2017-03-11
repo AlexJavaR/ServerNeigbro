@@ -5,6 +5,7 @@ import com.prototype.model.event.payment.BillEvent;
 import com.prototype.model.event.payment.HousematePayPalPaymentEvent;
 import com.prototype.security.AuthorizedUser;
 import com.prototype.service.payment.PaymentService;
+import com.prototype.to.BillForStatusInProcess;
 import com.prototype.to.HousemateBillPayment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -49,12 +50,55 @@ public class HousemateRestController {
         return new ResponseEntity<>(billEvent, HttpStatus.OK);
     }
 
-    //Get amount debt and all bills of single apartment - DONE
-    @GetMapping(value = "/bills/{addressId}")
-    public ResponseEntity<Map<Integer, List<ApartmentEvent>>> findAllBillsOfApartment(@PathVariable("addressId") BigInteger addressId) {
+    //For change bill in process
+    @PutMapping(value = "/paypal/bill", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<BillEvent> setStatusBillInProcess(@RequestBody BillForStatusInProcess billForStatusInProcess) {
+        if (billForStatusInProcess.getBillId() == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
         BigInteger userId = AuthorizedUser.id();
-        List<ApartmentEvent> listBills = paymentService.findAllBillsOfApartment(userId, addressId);
-        Integer amountDebt = paymentService.getAmountDebtOfApartment(userId, addressId);
+        BillEvent billEvent = paymentService.setStatusBillInProcess(userId, billForStatusInProcess.getBillId());
+        if (billEvent == null) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        return new ResponseEntity<>(billEvent, HttpStatus.OK);
+    }
+
+    //For change bill in process
+    @GetMapping(value = "/change/{billId}")
+    public ResponseEntity<BillEvent> setStatusBill(@PathVariable("billId") BigInteger billId) {
+        BigInteger userId = AuthorizedUser.id();
+        if (billId == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        BillEvent billEvent = paymentService.changeStatusBill(billId);
+        if (billEvent == null) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        return new ResponseEntity<>(billEvent, HttpStatus.OK);
+    }
+
+    //For change bill in process
+    @GetMapping(value = "/status/{billId}")
+    public ResponseEntity<Boolean> getStatusBill(@PathVariable("billId") BigInteger billId) {
+        BigInteger userId = AuthorizedUser.id();
+        if (billId == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Boolean isProcess = paymentService.getStatusBill(userId, billId);
+        if (isProcess == null) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        return new ResponseEntity<>(isProcess, HttpStatus.OK);
+    }
+
+    //Get amount debt and all bills of single apartment - DONE
+    @GetMapping(value = "/bills/{addressId}/{apartment}")
+    public ResponseEntity<Map<Integer, List<ApartmentEvent>>> findAllBillsOfApartment(@PathVariable("addressId") BigInteger addressId,
+                                                                                      @PathVariable("apartment") String apartment) {
+        BigInteger userId = AuthorizedUser.id();
+        List<ApartmentEvent> listBills = paymentService.findAllBillsOfApartment(userId, addressId, apartment);
+        Integer amountDebt = paymentService.getAmountDebtOfApartment(userId, addressId, apartment);
         if (listBills == null) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         } else if (listBills.isEmpty()) {
@@ -66,10 +110,11 @@ public class HousemateRestController {
     }
 
     //Get amount debt of current apartment - DONE
-    //@GetMapping(value = "/debt/{addressId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    //public ResponseEntity<Double> getAmountDebtOfApartment(@PathVariable("addressId") BigInteger addressId) {
-    //    BigInteger userId = AuthorizedUser.id();
-    //    Double amountDebt = paymentService.getAmountDebtOfApartment(userId, addressId);
-    //    return new ResponseEntity<>(amountDebt, HttpStatus.OK);
-    //}
+    @GetMapping(value = "/bills/debt/{addressId}/{apartment}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Integer> getAmountDebtOfApartment(@PathVariable("addressId") BigInteger addressId,
+                                                           @PathVariable("apartment") String apartment) {
+        BigInteger userId = AuthorizedUser.id();
+        Integer amountDebt = paymentService.getAmountDebtOfApartment(userId, addressId, apartment);
+        return new ResponseEntity<>(amountDebt, HttpStatus.OK);
+    }
 }

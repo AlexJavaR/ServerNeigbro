@@ -23,11 +23,23 @@ public class EventRestController {
     @Autowired
     private EventService eventService;
 
-    @GetMapping(value = "/event/{addressId}")
-    public ResponseEntity<List<Event>> findGeneralEventsOfAddress(@PathVariable("addressId") BigInteger addressId) {
+    @GetMapping(value = "/me/event/{addressId}/{apartment}")
+    public ResponseEntity<List<Event>> findGeneralEventsAsHousemate(@PathVariable("addressId") BigInteger addressId,
+                                                                  @PathVariable("apartment") String apartment) {
         if (addressId == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         BigInteger userId = AuthorizedUser.id();
-        List<Event> generalEventList = eventService.findGeneralEventsOfAddress(addressId, userId);
+        List<Event> generalEventList = eventService.findGeneralEventsAsHousemate(addressId, apartment, userId);
+        if (generalEventList == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(generalEventList, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/event/{addressId}")
+    public ResponseEntity<List<Event>> findGeneralEventsAsManager(@PathVariable("addressId") BigInteger addressId) {
+        if (addressId == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        BigInteger userId = AuthorizedUser.id();
+        List<Event> generalEventList = eventService.findGeneralEventsAsManager(addressId, userId);
         if (generalEventList == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

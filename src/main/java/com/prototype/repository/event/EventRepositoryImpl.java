@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -50,11 +51,27 @@ public class EventRepositoryImpl implements EventRepository {
     }
 
     @Override
-    public List<Event> findGeneralEventsOfAddress(ObjectId objectAddressId, String apartment) {
+    public List<Event> findGeneralEventsAsHousemate(ObjectId objectAddressId, String apartment) {
         //List<Event> generalEventsOfAddress = crudEventRepository.findGeneralEventsOfAddress(objectAddressId, apartment);
         //Collections.sort(generalEventsOfAddress, (o1, o2) -> o2.getDateEvent().compareTo(o1.getDateEvent()));
-        return crudEventRepository.findGeneralEventsOfAddress(objectAddressId, apartment, new Sort(Sort.Direction.DESC, "dateEvent"));
+        return crudEventRepository.findGeneralEventsAsHousemate(objectAddressId, apartment, new Sort(Sort.Direction.DESC, "dateEvent"));
         //return eventDao.findGeneralEventsOfAddress(objectAddressId, apartment);
+    }
+
+    @Override
+    public List<Event> findGeneralEventsAsManager(ObjectId objectAddressId) {
+        //List<Event> generalEventsOfAddress = crudEventRepository.findGeneralEventsOfAddress(objectAddressId, apartment);
+        //Collections.sort(generalEventsOfAddress, (o1, o2) -> o2.getDateEvent().compareTo(o1.getDateEvent()));
+        return crudEventRepository.findGeneralEventsAsManager(objectAddressId, new Sort(Sort.Direction.DESC, "dateEvent"));
+        //return eventDao.findGeneralEventsOfAddress(objectAddressId, apartment);
+    }
+
+    @Override
+    public List<BigInteger> getIdAllUnsettledBillsOfApartment(ObjectId objectAddressId, String apartment) {
+        List<BillEvent> listUnsettledBillEvents = crudEventRepository.getAmountDebtOfApartment(objectAddressId, apartment);
+        List<BigInteger> listUnsettledBillEventsId = new ArrayList<>();
+        listUnsettledBillEvents.forEach(b -> listUnsettledBillEventsId.add(b.getId()));
+        return listUnsettledBillEventsId;
     }
 
     @Override

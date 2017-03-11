@@ -20,11 +20,14 @@ public interface CrudEventRepository extends MongoRepository<Event, BigInteger> 
     @Query(value = "{'_class' : 'com.prototype.model.event.announcement.UserAnnouncementEvent', 'address.$id' : ?0}")
     List<UserAnnouncementEvent> findAllAnnouncementsOfAddress(ObjectId objectAddressId, Sort sort);
 
-    @Query(value = "{'address.$id' : ?0, 'apartment' : ?1, 'personal' : true}") //all personal event of apartment
+    @Query(value = "{'address.$id' : ?0, 'apartment' : ?1, 'personal' : true, '$and' : [{'_class' : {'$ne' : 'com.prototype.model.event.payment.HousemateCashPaymentEvent'}}, {'_class' : {'$ne' : 'com.prototype.model.event.payment.HousematePayPalPaymentEvent'}}]}") //all personal event of apartment
     List<ApartmentEvent> findAllPersonalEventOfApartment(ObjectId objectAddressId, String apartment, Sort sort);
 
-    @Query(value = "{'$or':[{'address.$id' : ?0, 'apartment' : ?1, 'personal' : true}, {'address.$id' : ?0, 'apartment' : null, 'personal' : false}, {'address.$id' : null}]}")
-    List<Event> findGeneralEventsOfAddress(ObjectId objectAddressId, String apartment, Sort sort);
+    @Query(value = "{'$or':[{'address.$id' : ?0, 'apartment' : ?1, 'personal' : true}, {'address.$id' : ?0, 'personal' : false, '_class' : {'$ne' : 'com.prototype.model.event.payment.ManagerPaymentEvent'}}, {'address.$id' : null}]}")
+    List<Event> findGeneralEventsAsHousemate(ObjectId objectAddressId, String apartment, Sort sort);
+
+    @Query(value = "{'$or':[{'address.$id' : ?0, 'personal' : true, '$or':[{'_class' : 'com.prototype.model.event.payment.HousemateCashPaymentEvent'}, {'_class' : 'com.prototype.model.event.payment.HousematePayPalPaymentEvent'}]}, {'address.$id' : ?0, 'personal' : false}, {'address.$id' : null}]}")
+    List<Event> findGeneralEventsAsManager(ObjectId objectAddressId, Sort sort);
 
     @Query(value = "{'address.$id' : ?0, 'apartment' : ?1, 'personal' : true, 'settled' : false}") // only unsettled bills
     List<BillEvent> getAmountDebtOfApartment(ObjectId objectAddressId, String apartment);

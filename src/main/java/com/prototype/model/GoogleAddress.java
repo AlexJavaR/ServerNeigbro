@@ -2,7 +2,9 @@ package com.prototype.model;
 
 import org.springframework.data.geo.Point;
 
-public class GoogleAddress {
+import java.io.Serializable;
+
+public class GoogleAddress implements Serializable {
     private String placeId;
     private String description;
     private Double latitude;

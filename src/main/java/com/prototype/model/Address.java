@@ -5,12 +5,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 @Document(collection = "Address")
-public class Address extends BaseEntity {
+public class Address extends BaseEntity implements Serializable {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String title;
     private GoogleAddress googleAddress;

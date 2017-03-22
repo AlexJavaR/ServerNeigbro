@@ -1,16 +1,18 @@
 package com.prototype.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Document(collection = "Address")
-public class Address extends BaseEntity {
+public class Address extends BaseEntity implements Serializable {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String title;
     private GoogleAddress googleAddress;
@@ -22,14 +24,16 @@ public class Address extends BaseEntity {
     private String phoneNumber;
     private Integer fundAddress;
     private Integer accountBalance;
+    private Integer amountForWithdrawal;
     private boolean managerExist;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "UTC")
     private LocalDateTime latestGeneratedMonthlyFee;
 
     public Address() {
     }
 
     public Address(BigInteger id, String className, String title, GoogleAddress googleAddress, String entrance, Integer firstApartment, Integer lastApartment,
-                   Integer monthlyFee, String phoneNumber, Integer fundAddress, Integer accountBalance, LocalDateTime latestGeneratedMonthlyFee) {
+                   Integer monthlyFee, String phoneNumber, Integer fundAddress, Integer accountBalance, Integer amountForWithdrawal, LocalDateTime latestGeneratedMonthlyFee) {
         super(id, className);
         this.title = title;
         this.googleAddress = googleAddress;
@@ -41,6 +45,7 @@ public class Address extends BaseEntity {
         this.phoneNumber = phoneNumber;
         this.fundAddress = fundAddress;
         this.accountBalance = accountBalance;
+        this.amountForWithdrawal = amountForWithdrawal;
         setManagerExist(false);
         this.latestGeneratedMonthlyFee = latestGeneratedMonthlyFee;
     }
@@ -92,6 +97,14 @@ public class Address extends BaseEntity {
 
     public void setAccountBalance(Integer accountBalance) {
         this.accountBalance = accountBalance;
+    }
+
+    public Integer getAmountForWithdrawal() {
+        return amountForWithdrawal;
+    }
+
+    public void setAmountForWithdrawal(Integer amountForWithdrawal) {
+        this.amountForWithdrawal = amountForWithdrawal;
     }
 
     public Integer getMonthlyFee() {

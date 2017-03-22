@@ -137,7 +137,7 @@ public class AddressServiceImpl implements AddressService {
                 address.setGoogleAddress(addressData.getAddress().getGoogleAddress());
                 address.setEntrance(addressData.getAddress().getEntrance());
             }
-
+            address.setAmountForWithdrawal(0);
             address.setListOfApartment(new ArrayList<>());
             address.setFirstApartment(addressData.getAddress().getFirstApartment());
             address.setLastApartment(addressData.getAddress().getLastApartment());

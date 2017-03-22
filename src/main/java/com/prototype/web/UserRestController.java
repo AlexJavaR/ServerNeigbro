@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.*;
 
 import org.apache.commons.validator.routines.EmailValidator;
 
+import javax.servlet.http.HttpSession;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -95,5 +95,11 @@ public class UserRestController {
 
         currentUser = userService.update(currentUser);
         return new ResponseEntity<>(currentUser, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(HttpSession session) {
+        session.invalidate();
     }
 }

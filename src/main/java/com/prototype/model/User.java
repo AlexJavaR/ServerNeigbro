@@ -2,7 +2,6 @@ package com.prototype.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -35,7 +34,11 @@ public class User extends BaseEntity {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "UTC")
     private LocalDateTime updatedDate;
 
-    public User(BigInteger id, String className, String firstName, String lastName, String password, String email, boolean sex, LocalDateTime birthday, boolean enabled, LocalDateTime registered, LocalDateTime updatedDate) {
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private BankAccount bankAccount;
+
+    public User(BigInteger id, String className, String firstName, String lastName, String password, String email, boolean sex,
+                LocalDateTime birthday, boolean enabled, LocalDateTime registered, LocalDateTime updatedDate, BankAccount bankAccount) {
         super(id, className);
         this.firstName = firstName;
         this.lastName = lastName;
@@ -47,6 +50,7 @@ public class User extends BaseEntity {
         this.registered = registered;
         this.updatedDate = updatedDate;
         this.addressDataList = new ArrayList<>();
+        this.bankAccount = bankAccount;
     }
 
     public User() {
@@ -120,6 +124,14 @@ public class User extends BaseEntity {
     public LocalDateTime getUpdatedDate() { return updatedDate; }
 
     public void setUpdatedDate(LocalDateTime updatedDate) { this.updatedDate = updatedDate; }
+
+    public BankAccount getBankAccount() {
+        return bankAccount;
+    }
+
+    public void setBankAccount(BankAccount bankAccount) {
+        this.bankAccount = bankAccount;
+    }
 
     public String getApartment(BigInteger addressId) {
         for (AddressData addressData : getAddressDataList()) {

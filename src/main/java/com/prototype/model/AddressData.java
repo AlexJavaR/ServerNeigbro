@@ -2,7 +2,9 @@ package com.prototype.model;
 
 import org.springframework.data.mongodb.core.mapping.DBRef;
 
-public class AddressData {
+import java.io.Serializable;
+
+public class AddressData implements Serializable {
     @DBRef
     private Address address;
     private String title;

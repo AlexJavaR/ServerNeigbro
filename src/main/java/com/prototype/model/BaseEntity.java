@@ -7,10 +7,11 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
 @JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, isGetterVisibility = NONE, setterVisibility = NONE)
-public class BaseEntity {
+public class BaseEntity implements Serializable {
     @Id
     protected BigInteger id;
     @Field("_class")

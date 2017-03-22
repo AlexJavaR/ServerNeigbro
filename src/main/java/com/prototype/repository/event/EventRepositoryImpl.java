@@ -1,6 +1,5 @@
 package com.prototype.repository.event;
 
-import com.prototype.model.event.ApartmentEvent;
 import com.prototype.model.event.Event;
 import com.prototype.model.event.announcement.UserAnnouncementEvent;
 import com.prototype.model.event.payment.BillEvent;
@@ -46,8 +45,8 @@ public class EventRepositoryImpl implements EventRepository {
     }
 
     @Override
-    public List<ApartmentEvent> findAllPersonalEventOfApartment(ObjectId objectAddressId, String apartment) {
-        return crudEventRepository.findAllPersonalEventOfApartment(objectAddressId, apartment, new Sort(Sort.Direction.DESC, "dateEvent"));
+    public List<BillEvent> findAllBillsOfApartment(ObjectId objectAddressId, String apartment) {
+        return crudEventRepository.findAllBillsOfApartment(objectAddressId, apartment, new Sort(Sort.Direction.DESC, "dateEvent"));
     }
 
     @Override

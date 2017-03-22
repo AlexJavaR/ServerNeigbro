@@ -1,6 +1,5 @@
 package com.prototype.repository.event;
 
-import com.prototype.model.event.ApartmentEvent;
 import com.prototype.model.event.Event;
 import com.prototype.model.event.announcement.UserAnnouncementEvent;
 import com.prototype.model.event.payment.BillEvent;
@@ -25,7 +24,7 @@ public interface EventRepository {
 
     List<UserAnnouncementEvent> findAllAnnouncementsOfAddress(ObjectId objectAddressId);
 
-    List<ApartmentEvent> findAllPersonalEventOfApartment(ObjectId objectAddressId, String apartment);
+    List<BillEvent> findAllBillsOfApartment(ObjectId objectAddressId, String apartment);
 
     List<Event> findGeneralEventsAsHousemate(ObjectId objectAddressId, String apartment);
 

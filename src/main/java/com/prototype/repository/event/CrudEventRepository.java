@@ -1,6 +1,5 @@
 package com.prototype.repository.event;
 
-import com.prototype.model.event.ApartmentEvent;
 import com.prototype.model.event.Event;
 import com.prototype.model.event.announcement.UserAnnouncementEvent;
 import com.prototype.model.event.payment.BillEvent;
@@ -21,7 +20,7 @@ public interface CrudEventRepository extends MongoRepository<Event, BigInteger> 
     List<UserAnnouncementEvent> findAllAnnouncementsOfAddress(ObjectId objectAddressId, Sort sort);
 
     @Query(value = "{'address.$id' : ?0, 'apartment' : ?1, 'personal' : true, '$and' : [{'_class' : {'$ne' : 'com.prototype.model.event.payment.HousemateCashPaymentEvent'}}, {'_class' : {'$ne' : 'com.prototype.model.event.payment.HousematePayPalPaymentEvent'}}]}") //all personal event of apartment
-    List<ApartmentEvent> findAllPersonalEventOfApartment(ObjectId objectAddressId, String apartment, Sort sort);
+    List<BillEvent> findAllBillsOfApartment(ObjectId objectAddressId, String apartment, Sort sort);
 
     @Query(value = "{'$or':[{'address.$id' : ?0, 'apartment' : ?1, 'personal' : true}, {'address.$id' : ?0, 'personal' : false, '_class' : {'$ne' : 'com.prototype.model.event.payment.ManagerPaymentEvent'}}, {'address.$id' : null}]}")
     List<Event> findGeneralEventsAsHousemate(ObjectId objectAddressId, String apartment, Sort sort);

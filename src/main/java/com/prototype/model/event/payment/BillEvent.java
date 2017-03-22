@@ -14,6 +14,7 @@ public abstract class BillEvent extends ApartmentEvent {
     private Integer balanceBill;
     private boolean settled;
     private boolean processed;
+    private Integer blockedAmount;
 
     @DBRef(lazy = true)
     @JsonManagedReference
@@ -26,6 +27,7 @@ public abstract class BillEvent extends ApartmentEvent {
         this.settled = settled;
         this.listHousematePayment = new ArrayList<>();
         setProcessed(false);
+        setBlockedAmount(0);
     }
 
     public boolean isSettled() {
@@ -66,5 +68,13 @@ public abstract class BillEvent extends ApartmentEvent {
 
     public void setProcessed(boolean processed) {
         this.processed = processed;
+    }
+
+    public Integer getBlockedAmount() {
+        return blockedAmount;
+    }
+
+    public void setBlockedAmount(Integer blockedAmount) {
+        this.blockedAmount = blockedAmount;
     }
 }

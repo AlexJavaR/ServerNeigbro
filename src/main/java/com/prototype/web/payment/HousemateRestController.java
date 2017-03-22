@@ -1,6 +1,5 @@
 package com.prototype.web.payment;
 
-import com.prototype.model.event.ApartmentEvent;
 import com.prototype.model.event.payment.BillEvent;
 import com.prototype.model.event.payment.HousematePayPalPaymentEvent;
 import com.prototype.security.AuthorizedUser;
@@ -52,12 +51,17 @@ public class HousemateRestController {
 
     //For change bill in process
     @PutMapping(value = "/paypal/bill", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<BillEvent> setStatusBillInProcess(@RequestBody BillForStatusInProcess billForStatusInProcess) {
-        if (billForStatusInProcess.getBillId() == null) {
+    public ResponseEntity<BillEvent> setStatusBill(@RequestBody BillForStatusInProcess billForStatusInProcess) {
+        if (billForStatusInProcess.getBillId() == null || billForStatusInProcess.isInProcess() == null || billForStatusInProcess.getBlockedAmount() == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         BigInteger userId = AuthorizedUser.id();
-        BillEvent billEvent = paymentService.setStatusBillInProcess(userId, billForStatusInProcess.getBillId());
+        BillEvent billEvent;
+        if (billForStatusInProcess.isInProcess()) {
+            billEvent = paymentService.setStatusBillInProcess(userId, billForStatusInProcess.getBillId(), billForStatusInProcess.getBlockedAmount());
+        } else {
+            billEvent = paymentService.setStatusBillWithoutInProcess(userId, billForStatusInProcess.getBillId(), billForStatusInProcess.getBlockedAmount());
+        }
         if (billEvent == null) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
@@ -94,17 +98,17 @@ public class HousemateRestController {
 
     //Get amount debt and all bills of single apartment - DONE
     @GetMapping(value = "/bills/{addressId}/{apartment}")
-    public ResponseEntity<Map<Integer, List<ApartmentEvent>>> findAllBillsOfApartment(@PathVariable("addressId") BigInteger addressId,
+    public ResponseEntity<Map<Integer, List<BillEvent>>> findAllBillsOfApartment(@PathVariable("addressId") BigInteger addressId,
                                                                                       @PathVariable("apartment") String apartment) {
         BigInteger userId = AuthorizedUser.id();
-        List<ApartmentEvent> listBills = paymentService.findAllBillsOfApartment(userId, addressId, apartment);
+        List<BillEvent> listBills = paymentService.findAllBillsOfApartment(userId, addressId, apartment);
         Integer amountDebt = paymentService.getAmountDebtOfApartment(userId, addressId, apartment);
         if (listBills == null) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         } else if (listBills.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
-        Map<Integer, List<ApartmentEvent>> debtOfApartment = new HashMap<>();
+        Map<Integer, List<BillEvent>> debtOfApartment = new HashMap<>();
         debtOfApartment.put(amountDebt, listBills);
         return new ResponseEntity<>(debtOfApartment, HttpStatus.OK);
     }

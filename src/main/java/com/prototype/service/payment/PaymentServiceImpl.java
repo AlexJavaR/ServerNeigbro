@@ -1,15 +1,12 @@
 package com.prototype.service.payment;
 
-import com.prototype.model.Address;
-import com.prototype.model.AddressData;
-import com.prototype.model.Role;
-import com.prototype.model.User;
-import com.prototype.model.event.ApartmentEvent;
+import com.prototype.model.*;
 import com.prototype.model.event.Event;
 import com.prototype.model.event.payment.*;
 import com.prototype.repository.address.AddressRepository;
 import com.prototype.repository.event.EventRepository;
 import com.prototype.repository.user.UserRepository;
+import com.prototype.service.email.EmailService;
 import com.prototype.to.ApartmentsWithDebt;
 import com.prototype.to.SingleManagerPayment;
 import org.bson.types.ObjectId;
@@ -22,37 +19,50 @@ import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service("PaymentService")
 public class PaymentServiceImpl implements PaymentService {
 
-    @Autowired
-    private EventRepository eventRepository;
+    private final EventRepository eventRepository;
+
+    private final AddressRepository addressRepository;
+
+    private final UserRepository userRepository;
+
+    private final EmailService emailService;
 
     @Autowired
-    private AddressRepository addressRepository;
-
-    @Autowired
-    private UserRepository userRepository;
+    public PaymentServiceImpl(EventRepository eventRepository, AddressRepository addressRepository,
+                              UserRepository userRepository, EmailService emailService) {
+        this.eventRepository = eventRepository;
+        this.addressRepository = addressRepository;
+        this.userRepository = userRepository;
+        this.emailService = emailService;
+    }
 
     @Override
-    public List<ApartmentEvent> findAllBillsOfApartment(BigInteger userId, BigInteger addressId, String apartment) {
+    public List<BillEvent> findAllBillsOfApartment(BigInteger userId, BigInteger addressId, String apartment) {
         ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
         if (apartment == null || objectAddressId == null) {
             return null;
         }
-        return eventRepository.findAllPersonalEventOfApartment(objectAddressId, apartment);
+        List<BillEvent> allBillsOfApartment = eventRepository.findAllBillsOfApartment(objectAddressId, apartment);
+        allBillsOfApartment.sort((abc1, abc2) -> Boolean.compare(abc1.isSettled(), abc2.isSettled()));
+        return allBillsOfApartment;
     }
 
     @Override
-    public List<ApartmentEvent> findAllBillsOfApartmentByManager(BigInteger managerId, BigInteger addressId, String apartment) {
+    public List<BillEvent> findAllBillsOfApartmentByManager(BigInteger managerId, BigInteger addressId, String apartment) {
         ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
         if (objectAddressId == null) {
             return null;
         }
         User managerUser = userRepository.findOne(managerId);
         if (userRepository.getRoleByAddress(managerUser, addressRepository.findOne(addressId)) == Role.MANAGER) {
-            return eventRepository.findAllPersonalEventOfApartment(objectAddressId, apartment);
+            List<BillEvent> allBillsOfApartment = eventRepository.findAllBillsOfApartment(objectAddressId, apartment);
+            allBillsOfApartment.sort((abc1, abc2) -> Boolean.compare(abc1.isSettled(), abc2.isSettled()));
+            return allBillsOfApartment;
         }
         return null;
     }
@@ -122,23 +132,43 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public BillEvent setStatusBillInProcess(BigInteger userId, BigInteger billId) {
+    public BillEvent setStatusBillInProcess(BigInteger userId, BigInteger billId, Integer blockedAmount) {
         User currentUser = userRepository.findOne(userId);
         BillEvent billEvent = (BillEvent) eventRepository.findOne(billId);
         if (currentUser == null || billEvent == null) {
             return null;
         }
-        if (userRepository.getAddressData(currentUser, billEvent.getAddress(), billEvent.getApartment()) != null && !billEvent.isProcessed()) {
-            billEvent.setProcessed(true);
+        if (userRepository.getAddressData(currentUser, billEvent.getAddress(), billEvent.getApartment()) != null) {
+            if (!billEvent.isProcessed()) {
+                billEvent.setProcessed(true);
+                billEvent.setBlockedAmount(blockedAmount);
+            }
             ActionListener taskPerformer = e -> {
                 if (billEvent.isProcessed()) {
                     billEvent.setProcessed(false);
+                    billEvent.setBlockedAmount(0);
                     eventRepository.save(billEvent);
                 }
             };
             Timer timer = new Timer(1800000, taskPerformer);
             timer.start();
             timer.setRepeats(false);
+            return eventRepository.save(billEvent);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public BillEvent setStatusBillWithoutInProcess(BigInteger userId, BigInteger billId, Integer blockedAmount) {
+        User currentUser = userRepository.findOne(userId);
+        BillEvent billEvent = (BillEvent) eventRepository.findOne(billId);
+        if (currentUser == null || billEvent == null) {
+            return null;
+        }
+        if (userRepository.getAddressData(currentUser, billEvent.getAddress(), billEvent.getApartment()) != null && billEvent.isProcessed()) {
+            billEvent.setProcessed(false);
+            billEvent.setBlockedAmount(0);
             return eventRepository.save(billEvent);
         } else {
             return null;
@@ -153,7 +183,12 @@ public class PaymentServiceImpl implements PaymentService {
         if (billEvent == null) {
             return null;
         }
-        billEvent.setProcessed(false);
+        if (billEvent.isProcessed()) {
+            billEvent.setProcessed(false);
+            billEvent.setBlockedAmount(0);
+        } else {
+            billEvent.setProcessed(true);
+        }
         return eventRepository.save(billEvent);
     }
 
@@ -194,6 +229,7 @@ public class PaymentServiceImpl implements PaymentService {
             address.setAccountBalance(address.getAccountBalance() + partAmount);
             addressRepository.save(address);
             billEvent.setProcessed(false);
+            billEvent.getListHousematePayment().sort((o1, o2) -> o2.getDateEvent().compareTo(o1.getDateEvent()));
             return eventRepository.save(billEvent);
         }
         return null;
@@ -247,6 +283,7 @@ public class PaymentServiceImpl implements PaymentService {
             address.setFundAddress(address.getFundAddress() + partAmount);
             addressRepository.save(address);
             billEvent.setProcessed(false);
+            billEvent.getListHousematePayment().sort((o1, o2) -> o2.getDateEvent().compareTo(o1.getDateEvent()));
             return eventRepository.save(billEvent);
         }
         return null;
@@ -324,6 +361,37 @@ public class PaymentServiceImpl implements PaymentService {
         }
         addressRepository.update(currentAddress);
         return new MonthlyBillEvent(LocalDateTime.now(), currentAddress, null, currentAddress.getMonthlyFee(), false);
+    }
+
+    @Override
+    public Address receiveMoneyFromAccountByManager(BigInteger managerId, BigInteger addressId, Integer amount, BankAccount bankAccount) {
+        User manager = userRepository.findOne(managerId);
+        Address address = addressRepository.findOne(addressId);
+        if (Role.MANAGER.equals(userRepository.getRoleByAddress(manager, address))) {
+            if (bankAccount.getAccount() == null || bankAccount.getBranch() == null || bankAccount.getBank() == null || amount > address.getAccountBalance()) {
+                return null;
+            }
+            address.setAmountForWithdrawal(amount);
+            address = addressRepository.save(address);
+            manager.setBankAccount(bankAccount);
+            manager = userRepository.save(manager);
+            emailService.sendNoticeAboutRequestForWithdrawalMoney(manager, address, amount);
+            return address;
+        }
+        return null;
+    }
+
+    @Override
+    public Address confirmWithdrawalMoney(BigInteger addressId, Integer amount) {
+        Address address = addressRepository.findOne(addressId);
+        if (Objects.equals(address.getAmountForWithdrawal(), amount))
+        {
+            address.setAccountBalance(address.getAccountBalance() - address.getAmountForWithdrawal());
+            address.setAmountForWithdrawal(0);
+            address = addressRepository.save(address);
+            return address;
+        }
+        return null;
     }
 
     //@Scheduled(cron = "0 0 12 1 * ?")

@@ -3,6 +3,7 @@ package com.prototype.service.report;
 import com.prototype.model.event.report.GeneratedReportEvent;
 import com.prototype.model.event.report.ReportEvent;
 import com.prototype.model.event.report.UploadReportEvent;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -16,15 +17,17 @@ public interface ReportService {
 
     GeneratedReportEvent createCurrentReport(BigInteger userId, BigInteger addressId);
 
-    UploadReportEvent createUploadReportEvent(BigInteger userId, BigInteger addressId, File file);
-
     List<UploadReportEvent> findAllUploadedReportsOfAddress(BigInteger addressId, BigInteger userId);
 
-    UploadReportEvent findCurrentUploadedReportsOfAddress(BigInteger addressId, BigInteger userId, BigInteger textId);
-
-    void deleteCurrentUploadedReport(UploadReportEvent uploadReportEvent);
+    File findCurrentUploadedReportsOfAddress(BigInteger addressId, BigInteger userId, BigInteger reportId);
 
     UploadReportEvent createEmptyUploadedReportEvent(UploadReportEvent uploadReportEvent);
 
     void createMonthlyReport();
+
+    void createTestMonthlyReport();
+
+    UploadReportEvent uploadFileForUploadReportEvent(BigInteger userId, BigInteger addressId, MultipartFile uploadedFile);
+
+    void deleteCurrentUploadedReportAndFile(BigInteger userId, BigInteger addressId, BigInteger reportId);
 }

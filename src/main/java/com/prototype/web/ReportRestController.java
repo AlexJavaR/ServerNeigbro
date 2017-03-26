@@ -45,4 +45,10 @@ public class ReportRestController {
         }
         return new ResponseEntity<>(reportEventList, HttpStatus.OK);
     }
+
+    @GetMapping(value = "/testreport")
+    public ResponseEntity<Void> findAllReportOfAddress() {
+        reportService.createTestMonthlyReport();
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

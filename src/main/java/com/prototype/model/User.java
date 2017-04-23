@@ -37,8 +37,11 @@ public class User extends BaseEntity {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private BankAccount bankAccount;
 
-    public User(BigInteger id, String className, String firstName, String lastName, String password, String email, boolean sex,
-                LocalDateTime birthday, boolean enabled, LocalDateTime registered, LocalDateTime updatedDate, BankAccount bankAccount) {
+    private String avatarUrl;
+
+    public User(BigInteger id, String className, String firstName, String lastName, String password,
+                String email, boolean sex, LocalDateTime birthday, boolean enabled, LocalDateTime registered,
+                LocalDateTime updatedDate, BankAccount bankAccount, String avatarUrl) {
         super(id, className);
         this.firstName = firstName;
         this.lastName = lastName;
@@ -51,6 +54,7 @@ public class User extends BaseEntity {
         this.updatedDate = updatedDate;
         this.addressDataList = new ArrayList<>();
         this.bankAccount = bankAccount;
+        this.avatarUrl = avatarUrl;
     }
 
     public User() {
@@ -131,6 +135,14 @@ public class User extends BaseEntity {
 
     public void setBankAccount(BankAccount bankAccount) {
         this.bankAccount = bankAccount;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public String getApartment(BigInteger addressId) {

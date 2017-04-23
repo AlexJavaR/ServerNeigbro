@@ -8,6 +8,7 @@ import com.prototype.model.User;
 import com.prototype.repository.user.UserRepository;
 
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service("userService")
@@ -29,6 +30,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User update(User user) {
         Assert.notNull(user, "user must not be null");
+        user.setUpdatedDate(LocalDateTime.now());
         return userRepository.save(user);
     }
 

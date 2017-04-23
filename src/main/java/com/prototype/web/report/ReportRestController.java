@@ -1,4 +1,4 @@
-package com.prototype.web;
+package com.prototype.web.report;
 
 import com.prototype.model.event.report.GeneratedReportEvent;
 import com.prototype.model.event.report.ReportEvent;

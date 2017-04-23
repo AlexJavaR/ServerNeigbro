@@ -1,4 +1,4 @@
-package com.prototype.web;
+package com.prototype.web.event;
 
 import com.prototype.model.event.Event;
 import com.prototype.security.AuthorizedUser;

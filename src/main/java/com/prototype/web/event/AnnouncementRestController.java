@@ -1,4 +1,4 @@
-package com.prototype.web;
+package com.prototype.web.event;
 
 import com.prototype.model.event.announcement.AnnouncementEvent;
 import com.prototype.model.event.announcement.UserAnnouncementEvent;

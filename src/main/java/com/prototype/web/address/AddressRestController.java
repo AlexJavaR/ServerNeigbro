@@ -1,4 +1,4 @@
-package com.prototype.web;
+package com.prototype.web.address;
 
 import com.prototype.model.AddressData;
 import com.prototype.security.AuthorizedUser;
@@ -25,7 +25,7 @@ public class AddressRestController {
     @GetMapping(value = "/me/address")
     public ResponseEntity<List<AddressData>> findAllAddressUser() {
         BigInteger userId = AuthorizedUser.id();
-        List<AddressData> addressData = addressService.findAll(userId);
+        List<AddressData> addressData = addressService.findAllAddressData(userId);
         return new ResponseEntity<>(addressData, HttpStatus.OK);
     }
 

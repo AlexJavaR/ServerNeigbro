@@ -57,9 +57,14 @@ public class AddressServiceImpl implements AddressService {
 //    }
 
     @Override
-    public List<AddressData> findAll(BigInteger userId) {
+    public List<AddressData> findAllAddressData(BigInteger userId) {
         User currentUser = userRepository.findOne(userId);
         return currentUser.getAddressDataList();
+    }
+
+    @Override
+    public List<Address> findAllAddress() {
+        return addressRepository.findAll();
     }
 
     @Override
@@ -134,9 +139,11 @@ public class AddressServiceImpl implements AddressService {
         if (Role.MANAGER.equals(addressData.getRole())) {
             if (address == null) {
                 address = new Address();
+                addressData.getAddress().getGoogleAddress().setAmountUser(0);
                 address.setGoogleAddress(addressData.getAddress().getGoogleAddress());
                 address.setEntrance(addressData.getAddress().getEntrance());
             }
+            address.getGoogleAddress().setAmountUser(address.getGoogleAddress().getAmountUser() + 1);
             address.setAmountForWithdrawal(0);
             address.setListOfApartment(new ArrayList<>());
             address.setFirstApartment(addressData.getAddress().getFirstApartment());
@@ -149,6 +156,8 @@ public class AddressServiceImpl implements AddressService {
             address.setAccountBalance(0);
             address.setFundAddress(0);
             address.setManagerExist(true);
+        } else {
+            return null;
         }
         address = addressRepository.save(address);
         //AddressData addressData = new AddressData(address, jsonGoogleAddress.getTitle(), null, Role.MANAGER);
@@ -170,6 +179,7 @@ public class AddressServiceImpl implements AddressService {
         Address address = addressRepository.findByPlaceId(placeId);
         if (address == null) {
             address = new Address();
+            addressData.getAddress().getGoogleAddress().setAmountUser(0);
             address.setGoogleAddress(addressData.getAddress().getGoogleAddress());
             address.setEntrance(addressData.getAddress().getEntrance());
             address = addressRepository.save(address);
@@ -180,6 +190,9 @@ public class AddressServiceImpl implements AddressService {
                 }
             }
         }
+
+        address.getGoogleAddress().setAmountUser(address.getGoogleAddress().getAmountUser() + 1);
+        address = addressRepository.save(address);
         AddressData newAddressData = new AddressData(address, addressData.getTitle(), addressData.getApartment(), Role.HOUSEMATE);
         if (!currentUser.getAddressDataList().isEmpty()) {
             for (AddressData list : currentUser.getAddressDataList()) {

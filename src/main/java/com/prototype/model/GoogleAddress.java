@@ -7,15 +7,23 @@ public class GoogleAddress implements Serializable {
     private String description;
     private Double latitude;
     private Double longitude;
+    private String house;
+    private String street;
+    private String city;
+    private Integer amountUser;
 
     public GoogleAddress() {
     }
 
-    public GoogleAddress(String placeId, String description, Double latitude, Double longitude) {
+    public GoogleAddress(String placeId, String description, Double latitude, Double longitude, String house, String street, String city, Integer amountUser) {
         this.placeId = placeId;
         this.description = description;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.house = house;
+        this.street = street;
+        this.city = city;
+        this.amountUser = amountUser;
     }
 
     public String getPlaceId() {
@@ -48,5 +56,37 @@ public class GoogleAddress implements Serializable {
 
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
+    }
+
+    public String getHouse() {
+        return house;
+    }
+
+    public void setHouse(String house) {
+        this.house = house;
+    }
+
+    public String getStreet() {
+        return street;
+    }
+
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public Integer getAmountUser() {
+        return amountUser;
+    }
+
+    public void setAmountUser(Integer amountUser) {
+        this.amountUser = amountUser;
     }
 }

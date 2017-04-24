@@ -1,4 +1,4 @@
-package com.prototype.web;
+package com.prototype.web.address;
 
 import com.prototype.model.Address;
 import com.prototype.model.AddressData;
@@ -6,6 +6,8 @@ import com.prototype.model.Role;
 import com.prototype.security.AuthorizedUser;
 import com.prototype.service.address.AddressService;
 import com.prototype.service.user.UserService;
+import com.prototype.to.CityWithAllHouses;
+import com.prototype.to.HouseLocation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -13,8 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -114,7 +115,7 @@ public class GoogleAddressRestController {
     @GetMapping(value = "/address")
     public ResponseEntity<List<AddressData>> findAllGoogleAddressUser() {
         BigInteger userId = AuthorizedUser.id();
-        List<AddressData> addressData = addressService.findAll(userId);
+        List<AddressData> addressData = addressService.findAllAddressData(userId);
         return new ResponseEntity<>(addressData, HttpStatus.OK);
     }
 
@@ -126,5 +127,28 @@ public class GoogleAddressRestController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(address, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/map/city/location")
+    public ResponseEntity<Map<String, CityWithAllHouses>> findAllCityWithLocation() {
+        List<Address> addressList = addressService.findAllAddress();
+        Map<String, CityWithAllHouses> cities = new HashMap<>();
+        for (Address address : addressList) {
+            String city = address.getGoogleAddress().getCity() == null ? "City" : address.getGoogleAddress().getCity();
+            if (cities.containsKey(city)){
+                CityWithAllHouses cityWithAllHouses = cities.get(city);
+                cityWithAllHouses.setTotal(cityWithAllHouses.getTotal() + address.getGoogleAddress().getAmountUser());
+                cityWithAllHouses.getHouses().add(new HouseLocation(address.getGoogleAddress().getAmountUser(),
+                        address.getGoogleAddress().getLatitude(), address.getGoogleAddress().getLongitude()));
+                cities.put(city, cityWithAllHouses);
+            } else {
+                CityWithAllHouses cityWithAllHouses = new CityWithAllHouses();
+                cityWithAllHouses.setTotal(address.getGoogleAddress().getAmountUser());
+                cityWithAllHouses.getHouses().add(new HouseLocation(address.getGoogleAddress().getAmountUser(),
+                        address.getGoogleAddress().getLatitude(), address.getGoogleAddress().getLongitude()));
+                cities.put(city, cityWithAllHouses);
+            }
+        }
+        return new ResponseEntity<>(cities, HttpStatus.OK);
     }
 }

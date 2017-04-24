@@ -31,7 +31,7 @@ public class ExceptionReportSenderImpl implements ExceptionReportSender {
         developers.put(Device.WEB, new HashSet<>(Arrays.asList(Developers.ANDREI, Developers.MARI)));
         developers.put(Device.ANDROID, new HashSet<>(Arrays.asList(Developers.ALEX_MELESHKO, Developers.VLAD_PAPAVA)));
         developers.put(Device.IOS, new HashSet<>(Arrays.asList(Developers.VLAD_DORFMAN)));
-        developers.put(Device.SERVER, new HashSet<>(Arrays.asList(Developers.ALEX_MELESHKO, Developers.ANDREI, Developers.DENIS_NETOSIN)));
+        developers.put(Device.SERVER, new HashSet<>(Arrays.asList(Developers.ALEX_MELESHKO, Developers.ANDREI, Developers.VLAD_PAPAVA)));
     }
 
     private String[] getRecipients(Device device){

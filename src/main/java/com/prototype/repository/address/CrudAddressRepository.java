@@ -7,6 +7,6 @@ import org.springframework.data.mongodb.repository.Query;
 import java.math.BigInteger;
 
 public interface CrudAddressRepository extends MongoRepository<Address, BigInteger> {
-    @Query(value = "{'googleAddress.placeId' : ?0}")
-    Address findByPlaceId(String placeId);
+    @Query(value = "{'googleAddress.placeId' : ?0, 'entrance' : {$regex : '^?1$', $options: 'i'}}")
+    Address findByPlaceIdAndEntrance(String placeId, String entrance);
 }

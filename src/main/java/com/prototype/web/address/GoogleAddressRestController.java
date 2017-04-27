@@ -38,7 +38,7 @@ public class GoogleAddressRestController {
             return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
         }
         List<AddressData> list = userService.findOne(userId).getAddressDataList()
-                .stream().filter(ad -> Objects.equals(ad.getAddress().getGoogleAddress().getPlaceId(), addressData.getAddress().getGoogleAddress().getPlaceId()))
+                .stream().filter(ad -> ad.getAddress().equals(addressData.getAddress()))
                 .collect(Collectors.toList());
         Address address = null;
         if(!list.isEmpty()) {
@@ -88,12 +88,13 @@ public class GoogleAddressRestController {
     }
 
     //for add address as manager or housemate
-    @GetMapping(value = "/address/{placeId}")
-    public ResponseEntity<Boolean> isManagerExist(@PathVariable("placeId") String placeId) {
+    @GetMapping(value = "/address/verify")
+    public ResponseEntity<Boolean> isManagerExist(@RequestParam(value = "placeId", required = false) String placeId,
+                                                  @RequestParam(value = "entrance", required = false) String entrance) {
         //TODO validate new address
         if (placeId == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         BigInteger userId = AuthorizedUser.id();
-        Address address = addressService.findAddressByPlaceId(placeId);
+        Address address = addressService.findAddressByPlaceIdAndEntrance(placeId, entrance);
         if (address == null) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
@@ -102,10 +103,11 @@ public class GoogleAddressRestController {
     }
 
     //for add address as manager or housemate
-    @GetMapping(value = "/{placeId}")
-    public ResponseEntity<Address> isAddressExist(@PathVariable("placeId") String placeId) {
+    @GetMapping(value = "/verify")
+    public ResponseEntity<Address> isAddressExist(@RequestParam(value = "placeId", required = false) String placeId,
+                                                  @RequestParam(value = "entrance", required = false) String entrance) {
         if (placeId == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        Address address = addressService.findAddressByPlaceId(placeId);
+        Address address = addressService.findAddressByPlaceIdAndEntrance(placeId, entrance);
         if (address == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

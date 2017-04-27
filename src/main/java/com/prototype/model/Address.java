@@ -154,4 +154,24 @@ public class Address extends BaseEntity implements Serializable {
     public void setLatestGeneratedMonthlyFee(LocalDateTime latestGeneratedMonthlyFee) {
         this.latestGeneratedMonthlyFee = latestGeneratedMonthlyFee;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        Address address = (Address) o;
+
+        if (!googleAddress.equals(address.googleAddress)) return false;
+        return entrance != null ? entrance.equals(address.entrance) : address.entrance == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + googleAddress.hashCode();
+        result = 31 * result + (entrance != null ? entrance.hashCode() : 0);
+        return result;
+    }
 }

@@ -135,7 +135,7 @@ public class AddressServiceImpl implements AddressService {
     public Address addAddressAsManager(AddressData addressData, BigInteger userId) {
         User currentUser = userRepository.findOne(userId);
         String placeId = addressData.getAddress().getGoogleAddress().getPlaceId();
-        Address address = addressRepository.findByPlaceId(placeId);
+        Address address = addressRepository.findByPlaceIdAndEntrance(placeId, addressData.getAddress().getEntrance());
         if (Role.MANAGER.equals(addressData.getRole())) {
             if (address == null) {
                 address = new Address();
@@ -176,7 +176,7 @@ public class AddressServiceImpl implements AddressService {
     public Address addAddressAsHousemate(AddressData addressData, BigInteger userId) {
         User currentUser = userRepository.findOne(userId);
         String placeId = addressData.getAddress().getGoogleAddress().getPlaceId();
-        Address address = addressRepository.findByPlaceId(placeId);
+        Address address = addressRepository.findByPlaceIdAndEntrance(placeId, addressData.getAddress().getEntrance());
         if (address == null) {
             address = new Address();
             addressData.getAddress().getGoogleAddress().setAmountUser(0);
@@ -205,7 +205,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public Address findAddressByPlaceId(String placeId) {
-        return addressRepository.findByPlaceId(placeId);
+    public Address findAddressByPlaceIdAndEntrance(String placeId, String entrance) {
+        return addressRepository.findByPlaceIdAndEntrance(placeId, entrance);
     }
 }

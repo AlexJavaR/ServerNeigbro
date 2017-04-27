@@ -17,5 +17,5 @@ public interface AddressRepository {
 
     List<Address> findAll();
 
-    Address findByPlaceId(String placeId);
+    Address findByPlaceIdAndEntrance(String placeId, String entrance);
 }

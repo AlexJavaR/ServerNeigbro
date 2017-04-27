@@ -89,4 +89,28 @@ public class GoogleAddress implements Serializable {
     public void setAmountUser(Integer amountUser) {
         this.amountUser = amountUser;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        GoogleAddress that = (GoogleAddress) o;
+
+        if (!placeId.equals(that.placeId)) return false;
+        if (latitude != null ? !latitude.equals(that.latitude) : that.latitude != null) return false;
+        if (longitude != null ? !longitude.equals(that.longitude) : that.longitude != null) return false;
+        if (house != null ? !house.equals(that.house) : that.house != null) return false;
+        if (street != null ? !street.equals(that.street) : that.street != null) return false;
+        if (city != null ? !city.equals(that.city) : that.city != null) return false;
+        return amountUser != null ? amountUser.equals(that.amountUser) : that.amountUser == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = placeId.hashCode();
+        result = 31 * result + (latitude != null ? latitude.hashCode() : 0);
+        result = 31 * result + (longitude != null ? longitude.hashCode() : 0);
+        return result;
+    }
 }

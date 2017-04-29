@@ -1,18 +1,13 @@
 package com.prototype.service.address;
 
-import com.prototype.model.*;
 import com.prototype.repository.address.AddressRepository;
 import com.prototype.repository.user.UserRepository;
-import com.prototype.to.HousemateAddressData;
-import com.prototype.to.JsonGoogleAddress;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.geo.Point;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import com.prototype.model.Address;
 import com.prototype.model.AddressData;
@@ -62,9 +57,50 @@ public class AddressServiceImpl implements AddressService {
 //    }
 
     @Override
-    public List<AddressData> findAll(BigInteger userId) {
+    public List<AddressData> findAllAddressData(BigInteger userId) {
         User currentUser = userRepository.findOne(userId);
         return currentUser.getAddressDataList();
+    }
+
+    @Override
+    public List<Address> findAllAddress() {
+        return addressRepository.findAll();
+    }
+
+    @Override
+    public AddressData updateAddressData(AddressData addressData, BigInteger userId) {
+        Address currentAddress = addressRepository.findOne(addressData.getAddress().getId());
+        User currentUser = userRepository.findOne(userId);
+        AddressData currentAddressData = userRepository.getAddressDataByAddress(currentUser, currentAddress);
+        if (addressData.getRole().equals(Role.MANAGER)) {
+            currentAddressData.setTitle(addressData.getTitle() != null ? addressData.getTitle() : currentAddressData.getTitle());
+            currentAddress.setEntrance(addressData.getAddress().getEntrance() != null ? addressData.getAddress().getEntrance() : currentAddress.getEntrance());
+            currentAddress.setFirstApartment(addressData.getAddress().getFirstApartment() != null ? addressData.getAddress().getFirstApartment() : currentAddress.getFirstApartment());
+            currentAddress.setLastApartment(addressData.getAddress().getLastApartment() != null ? addressData.getAddress().getLastApartment() : currentAddress.getLastApartment());
+            currentAddress.setMonthlyFee(addressData.getAddress().getMonthlyFee() != null ? addressData.getAddress().getMonthlyFee() : currentAddress.getMonthlyFee());
+            currentAddress.setPhoneNumber(addressData.getAddress().getPhoneNumber() != null ? addressData.getAddress().getPhoneNumber() : currentAddress.getPhoneNumber());
+            currentAddressData.setAddress(currentAddress);
+            if (addressData.getAddress().getFirstApartment() != null && addressData.getAddress().getLastApartment() != null) {
+                currentAddress.setListOfApartment(new ArrayList<>());
+                for (int i = addressData.getAddress().getFirstApartment(); i <= addressData.getAddress().getLastApartment(); i++) {
+                    currentAddress.getListOfApartment().add(String.valueOf(i));
+                }
+            }
+            userRepository.save(currentUser);
+            addressRepository.update(currentAddress);
+            return currentAddressData;
+        } else if (addressData.getRole().equals(Role.HOUSEMATE)) {
+            if (currentAddress.isManagerExist() && currentAddress.getListOfApartment().contains(addressData.getApartment())) {
+                currentAddressData.setTitle(addressData.getTitle() != null ? addressData.getTitle() : currentAddressData.getTitle());
+                currentAddressData.setApartment(addressData.getApartment() != null ? addressData.getApartment() : currentAddressData.getApartment());
+            } else if (!currentAddress.isManagerExist()) {
+                currentAddressData.setTitle(addressData.getTitle() != null ? addressData.getTitle() : currentAddressData.getTitle());
+                currentAddressData.setApartment(addressData.getApartment() != null ? addressData.getApartment() : currentAddressData.getApartment());
+            } else return null;
+            userRepository.save(currentUser);
+            return currentAddressData;
+        }
+        return null;
     }
 
     @Override
@@ -99,14 +135,16 @@ public class AddressServiceImpl implements AddressService {
     public Address addAddressAsManager(AddressData addressData, BigInteger userId) {
         User currentUser = userRepository.findOne(userId);
         String placeId = addressData.getAddress().getGoogleAddress().getPlaceId();
-        Address address = addressRepository.findByPlaceId(placeId);
+        Address address = addressRepository.findByPlaceIdAndEntrance(placeId, addressData.getAddress().getEntrance());
         if (Role.MANAGER.equals(addressData.getRole())) {
             if (address == null) {
                 address = new Address();
+                addressData.getAddress().getGoogleAddress().setAmountUser(0);
                 address.setGoogleAddress(addressData.getAddress().getGoogleAddress());
                 address.setEntrance(addressData.getAddress().getEntrance());
             }
-
+            address.getGoogleAddress().setAmountUser(address.getGoogleAddress().getAmountUser() + 1);
+            address.setAmountForWithdrawal(0);
             address.setListOfApartment(new ArrayList<>());
             address.setFirstApartment(addressData.getAddress().getFirstApartment());
             address.setLastApartment(addressData.getAddress().getLastApartment());
@@ -118,6 +156,8 @@ public class AddressServiceImpl implements AddressService {
             address.setAccountBalance(0);
             address.setFundAddress(0);
             address.setManagerExist(true);
+        } else {
+            return null;
         }
         address = addressRepository.save(address);
         //AddressData addressData = new AddressData(address, jsonGoogleAddress.getTitle(), null, Role.MANAGER);
@@ -136,9 +176,10 @@ public class AddressServiceImpl implements AddressService {
     public Address addAddressAsHousemate(AddressData addressData, BigInteger userId) {
         User currentUser = userRepository.findOne(userId);
         String placeId = addressData.getAddress().getGoogleAddress().getPlaceId();
-        Address address = addressRepository.findByPlaceId(placeId);
+        Address address = addressRepository.findByPlaceIdAndEntrance(placeId, addressData.getAddress().getEntrance());
         if (address == null) {
             address = new Address();
+            addressData.getAddress().getGoogleAddress().setAmountUser(0);
             address.setGoogleAddress(addressData.getAddress().getGoogleAddress());
             address.setEntrance(addressData.getAddress().getEntrance());
             address = addressRepository.save(address);
@@ -149,6 +190,9 @@ public class AddressServiceImpl implements AddressService {
                 }
             }
         }
+
+        address.getGoogleAddress().setAmountUser(address.getGoogleAddress().getAmountUser() + 1);
+        address = addressRepository.save(address);
         AddressData newAddressData = new AddressData(address, addressData.getTitle(), addressData.getApartment(), Role.HOUSEMATE);
         if (!currentUser.getAddressDataList().isEmpty()) {
             for (AddressData list : currentUser.getAddressDataList()) {
@@ -161,7 +205,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public Address findAddressByPlaceId(String placeId) {
-        return addressRepository.findByPlaceId(placeId);
+    public Address findAddressByPlaceIdAndEntrance(String placeId, String entrance) {
+        return addressRepository.findByPlaceIdAndEntrance(placeId, entrance);
     }
 }

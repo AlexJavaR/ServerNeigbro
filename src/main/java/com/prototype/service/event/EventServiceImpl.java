@@ -2,7 +2,6 @@ package com.prototype.service.event;
 
 import com.prototype.model.event.Event;
 import com.prototype.repository.event.EventRepository;
-import com.prototype.repository.user.UserRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,13 +15,26 @@ public class EventServiceImpl implements EventService {
     @Autowired
     private EventRepository eventRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    @Override
+    public List<Event> findGeneralEventsAsHousemate(BigInteger addressId, String apartment, BigInteger userId) {
+        //String apartment = userRepository.findOne(userId).getApartment(addressId);
+        ObjectId objectAddressId;
+        try {
+            objectAddressId = new ObjectId(addressId.toString(16));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        return eventRepository.findGeneralEventsAsHousemate(objectAddressId, apartment);
+    }
 
     @Override
-    public List<Event> findGeneralEventsOfAddress(BigInteger addressId, BigInteger userId) {
-        String apartment = userRepository.findOne(userId).getApartment(addressId);
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
-        return eventRepository.findGeneralEventsOfAddress(objectAddressId, apartment);
+    public List<Event> findGeneralEventsAsManager(BigInteger addressId, BigInteger userId) {
+        ObjectId objectAddressId;
+        try {
+            objectAddressId = new ObjectId(addressId.toString(16));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        return eventRepository.findGeneralEventsAsManager(objectAddressId);
     }
 }

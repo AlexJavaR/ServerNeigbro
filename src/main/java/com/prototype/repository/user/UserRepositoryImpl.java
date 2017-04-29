@@ -17,7 +17,7 @@ import java.util.Objects;
 public class UserRepositoryImpl implements UserRepository {
 
     @Autowired
-    CrudUserRepository crudRepository;
+    private CrudUserRepository crudRepository;
 
     @Override
     public User getByEmail(String email) {
@@ -54,6 +54,14 @@ public class UserRepositoryImpl implements UserRepository {
     public AddressData getAddressDataByAddress(User user, Address address) {
         for (AddressData addressData : user.getAddressDataList()) {
             if (Objects.equals(addressData.getAddress().getId(), address.getId())) return addressData;
+        }
+        return null;
+    }
+
+    @Override
+    public AddressData getAddressData(User user, Address address, String apartment) {
+        for (AddressData addressData : user.getAddressDataList()) {
+            if (Objects.equals(addressData.getAddress().getId(), address.getId()) && apartment.equals(addressData.getApartment())) return addressData;
         }
         return null;
     }

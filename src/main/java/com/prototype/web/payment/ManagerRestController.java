@@ -1,7 +1,7 @@
 package com.prototype.web.payment;
 
 import com.prototype.model.Address;
-import com.prototype.model.event.ApartmentEvent;
+import com.prototype.model.event.payment.BillEvent;
 import com.prototype.model.event.payment.HousemateCashPaymentEvent;
 import com.prototype.model.event.payment.ManagerPaymentEvent;
 import com.prototype.model.event.payment.MonthlyBillEvent;
@@ -10,6 +10,7 @@ import com.prototype.service.address.AddressService;
 import com.prototype.service.payment.PaymentService;
 import com.prototype.to.ApartmentsWithDebt;
 import com.prototype.to.HousemateBillPayment;
+import com.prototype.to.MonthlyFeeForAddress;
 import com.prototype.to.SingleManagerPayment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,11 +35,17 @@ public class ManagerRestController {
     @Autowired
     private AddressService addressService;
 
-    @GetMapping(value = "/monthly")
-    public ResponseEntity<MonthlyBillEvent> createMonthleBills() {
-        paymentService.createMonthlyBillForAllApartment();
-
-        return new ResponseEntity<>(HttpStatus.OK);
+    @PostMapping(value = "/me/payment/monthly", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Address> createMonthlyFeeForAddress(@RequestBody MonthlyFeeForAddress monthlyFeeForAddress) {
+        BigInteger managerId = AuthorizedUser.id();
+        BigInteger addressId = monthlyFeeForAddress.getAddressId();
+        if (addressId == null || addressService.findOne(addressId) == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        MonthlyBillEvent monthlyBillEvent = paymentService.createMonthlyBillForAddress(addressId, managerId);
+        if (monthlyBillEvent == null) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        Address currentAddress = addressService.findOne(addressId);
+        return new ResponseEntity<>(currentAddress, HttpStatus.CREATED);
     }
 
 
@@ -62,7 +69,10 @@ public class ManagerRestController {
     public ResponseEntity<ManagerPaymentEvent> addSingleManagerPayment(@RequestBody SingleManagerPayment singleManagerPayment) {
         //TODO validate new single payment
         BigInteger userId = AuthorizedUser.id();
-
+        if (singleManagerPayment.getTotalAmount() == null || singleManagerPayment.getAddressId() == null ||
+                singleManagerPayment.getTitle() == null || singleManagerPayment.getDescription() == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
         ManagerPaymentEvent managerPaymentEvent = paymentService.addSinglePayment(userId, singleManagerPayment);
         if (managerPaymentEvent == null) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
@@ -83,28 +93,29 @@ public class ManagerRestController {
 
     //Pay single bill of apartment with cash - DONE
     @PutMapping(value = "/cash", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<HousemateCashPaymentEvent> payCashSingleBillOfApartment(@RequestBody HousemateBillPayment housemateBillPayment) {
+    public ResponseEntity<BillEvent> payCashSingleBillOfApartment(@RequestBody HousemateBillPayment housemateBillPayment) {
         BigInteger managerId = AuthorizedUser.id();
-        HousemateCashPaymentEvent housemateCashPaymentEvent = paymentService.payCashSingleBillOfApartment(managerId, housemateBillPayment.getAddressId(), housemateBillPayment.getApartment(), housemateBillPayment.getBillId());
-        if (housemateCashPaymentEvent == null) {
+        BillEvent billEvent = paymentService.payCashSingleBillOfApartment(managerId, housemateBillPayment.getAddressId(),
+                housemateBillPayment.getApartment(), housemateBillPayment.getBillId(), housemateBillPayment.getPartAmount());
+        if (billEvent == null) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
-        return new ResponseEntity<>(housemateCashPaymentEvent, HttpStatus.OK);
+        return new ResponseEntity<>(billEvent, HttpStatus.OK);
     }
 
     //Get amount debt and all bills of single apartment - DONE
     @GetMapping(value = "/bills/{addressId}/{apartment}")
-    public ResponseEntity<Map<Integer, List<ApartmentEvent>>> findAllBillsOfApartmentByManager(@PathVariable("addressId") BigInteger addressId,
+    public ResponseEntity<Map<Integer, List<BillEvent>>> findAllBillsOfApartmentByManager(@PathVariable("addressId") BigInteger addressId,
                                                                                                @PathVariable("apartment") String apartment) {
         BigInteger managerId = AuthorizedUser.id();
-        List<ApartmentEvent> listBills = paymentService.findAllBillsOfApartmentByManager(managerId, addressId, apartment);
+        List<BillEvent> listBills = paymentService.findAllBillsOfApartmentByManager(managerId, addressId, apartment);
         Integer amountDebt = paymentService.getAmountDebtOfApartmentByManager(managerId, addressId, apartment);
         if (listBills == null) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         } else if (listBills.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
-        Map<Integer, List<ApartmentEvent>> debtOfApartment = new HashMap<>();
+        Map<Integer, List<BillEvent>> debtOfApartment = new HashMap<>();
         debtOfApartment.put(amountDebt, listBills);
         return new ResponseEntity<>(debtOfApartment, HttpStatus.OK);
     }
@@ -113,6 +124,7 @@ public class ManagerRestController {
     @GetMapping(value = "/bills/{addressId}")
     public ResponseEntity<List<ApartmentsWithDebt>> getDebtOfAllApartmentsByManager(@PathVariable("addressId") BigInteger addressId) {
         BigInteger managerId = AuthorizedUser.id();
+        if (addressId == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         Address address = addressService.findOne(addressId);
         if (address == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

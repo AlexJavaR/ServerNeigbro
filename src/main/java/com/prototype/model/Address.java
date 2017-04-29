@@ -1,12 +1,13 @@
 package com.prototype.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,13 +24,16 @@ public class Address extends BaseEntity implements Serializable {
     private String phoneNumber;
     private Integer fundAddress;
     private Integer accountBalance;
+    private Integer amountForWithdrawal;
     private boolean managerExist;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "UTC")
+    private LocalDateTime latestGeneratedMonthlyFee;
 
     public Address() {
     }
 
-    public Address(BigInteger id, String className, String title, GoogleAddress googleAddress, String entrance, Integer firstApartment,
-                   Integer lastApartment, Integer monthlyFee, String phoneNumber, Integer fundAddress, Integer accountBalance) {
+    public Address(BigInteger id, String className, String title, GoogleAddress googleAddress, String entrance, Integer firstApartment, Integer lastApartment,
+                   Integer monthlyFee, String phoneNumber, Integer fundAddress, Integer accountBalance, Integer amountForWithdrawal, LocalDateTime latestGeneratedMonthlyFee) {
         super(id, className);
         this.title = title;
         this.googleAddress = googleAddress;
@@ -41,7 +45,9 @@ public class Address extends BaseEntity implements Serializable {
         this.phoneNumber = phoneNumber;
         this.fundAddress = fundAddress;
         this.accountBalance = accountBalance;
+        this.amountForWithdrawal = amountForWithdrawal;
         setManagerExist(false);
+        this.latestGeneratedMonthlyFee = latestGeneratedMonthlyFee;
     }
 
     public GoogleAddress getGoogleAddress() {
@@ -93,6 +99,14 @@ public class Address extends BaseEntity implements Serializable {
         this.accountBalance = accountBalance;
     }
 
+    public Integer getAmountForWithdrawal() {
+        return amountForWithdrawal;
+    }
+
+    public void setAmountForWithdrawal(Integer amountForWithdrawal) {
+        this.amountForWithdrawal = amountForWithdrawal;
+    }
+
     public Integer getMonthlyFee() {
         return monthlyFee;
     }
@@ -124,13 +138,40 @@ public class Address extends BaseEntity implements Serializable {
     public void setEntrance(String entrance) {
         this.entrance = entrance;
     }
-
-    @JsonIgnore
+    
     public boolean isManagerExist() {
         return managerExist;
     }
 
     public void setManagerExist(boolean managerExist) {
         this.managerExist = managerExist;
+    }
+
+    public LocalDateTime getLatestGeneratedMonthlyFee() {
+        return latestGeneratedMonthlyFee;
+    }
+
+    public void setLatestGeneratedMonthlyFee(LocalDateTime latestGeneratedMonthlyFee) {
+        this.latestGeneratedMonthlyFee = latestGeneratedMonthlyFee;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        Address address = (Address) o;
+
+        if (!googleAddress.equals(address.googleAddress)) return false;
+        return entrance != null ? entrance.equals(address.entrance) : address.entrance == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + googleAddress.hashCode();
+        result = 31 * result + (entrance != null ? entrance.hashCode() : 0);
+        return result;
     }
 }

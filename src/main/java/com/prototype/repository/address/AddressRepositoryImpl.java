@@ -39,7 +39,7 @@ public class AddressRepositoryImpl implements AddressRepository {
     }
 
     @Override
-    public Address findByPlaceId(String placeId) {
-        return crudAddressRepository.findByPlaceId(placeId);
+    public Address findByPlaceIdAndEntrance(String placeId, String entrance) {
+        return crudAddressRepository.findByPlaceIdAndEntrance(placeId, entrance);
     }
 }

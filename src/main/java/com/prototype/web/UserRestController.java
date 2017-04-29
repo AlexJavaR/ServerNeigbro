@@ -9,12 +9,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import org.apache.commons.validator.routines.EmailValidator;
-
+import javax.servlet.http.HttpSession;
 import java.math.BigInteger;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -28,10 +24,9 @@ public class UserRestController {
 
     //-------------------Retrieve All Users-------------------------------------------
     @GetMapping(value = "/users")
-    public ResponseEntity<List<User>> findAll()
-    {
+    public ResponseEntity<List<User>> findAll() {
         List<User> users = userService.findAll();
-        if(users.isEmpty()){
+        if (users.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(users, HttpStatus.OK);
@@ -40,38 +35,13 @@ public class UserRestController {
     //-------------------Retrieve Single User-----------------------------------------
 
     @GetMapping(value = "/me")
-    public ResponseEntity<User> findOne()
-    {
+    public ResponseEntity<User> findOne() {
         BigInteger id = AuthorizedUser.id();
         User user = userService.findOne(id);
         if (user == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(user, HttpStatus.OK);
-    }
-
-    //-------------------Create a User-------------------------------------------------
-
-    @PostMapping(value = "/registration", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        String email = user.getEmail();
-        boolean valid = EmailValidator.getInstance().isValid(email);
-        if (!valid)
-        {
-            return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
-        }
-        user.setAddressDataList(new ArrayList<>());
-        User createdUser = userService.save(user);
-        if (createdUser == null)
-        {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-
-//        URI uriOfNewResource = ServletUriComponentsBuilder.fromCurrentContextPath()
-//                .buildAndExpand().toUri();
-//        return ResponseEntity.created(uriOfNewResource).body(user);
-
-        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 
     //------------------- Update a User --------------------------------------------------------
@@ -82,7 +52,7 @@ public class UserRestController {
 
         User currentUser = userService.findOne(userId);
 
-        if (currentUser==null) {
+        if (currentUser == null) {
             System.out.println("User with id " + userId + " not found");
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -91,9 +61,14 @@ public class UserRestController {
         currentUser.setLastName(user.getLastName() != null ? user.getLastName() : currentUser.getLastName());
         currentUser.setBirthday(user.getBirthday() != null ? user.getBirthday() : currentUser.getBirthday());
         currentUser.setSex(user.isSex());
-        currentUser.setUpdatedDate(LocalDateTime.now());
 
         currentUser = userService.update(currentUser);
         return new ResponseEntity<>(currentUser, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(HttpSession session) {
+        session.invalidate();
     }
 }

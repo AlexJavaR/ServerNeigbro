@@ -52,8 +52,14 @@ public class MessageServiceImp implements MessageService {
         }
 
         if (valid) {
-            ObjectId objectAddressId = new ObjectId(addressId.toString(16));
-            ObjectId objectUserId = new ObjectId(userId.toString(16));
+            ObjectId objectAddressId;
+            ObjectId objectUserId;
+            try {
+                objectAddressId = new ObjectId(addressId.toString(16));
+                objectUserId = new ObjectId(userId.toString(16));
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
             Integer messages = messageRepository.IsMoreThen(objectAddressId, objectUserId);
             if (messages <= 100) {
                 return messageRepository.save(message);
@@ -65,55 +71,39 @@ public class MessageServiceImp implements MessageService {
         } else return null;
     }
 
-//    public List<Message> findAllMessagesOnAdressFromPostId(Address address, BigInteger messagepostid) {
-//
-//        ObjectId messId = new ObjectId(messagepostid.toString(16));
-//        List<Message> temp = messageRepository.findByAddressAndIdGreaterThan(address, messId);
-//        return temp;
-//   }
+    @Override
+    public List<Message> findByAddressAndIdGreaterThan(Address address, BigInteger messageId) {
+        ObjectId objectMessageId = convertBigIntegerToObjectId(messageId);
+        if (objectMessageId == null) {
+            return null;
+        }
+        return messageRepository.findByAddressAndIdGreaterThan(address, objectMessageId);
+    }
 
-
-//   public  List<Message> findByAddressOrderById( BigInteger addressId , BigInteger messageId)
-//   {
-//       Address address = addressRepository.findOne(addressId);
-//       Message message = messageRepository.findMessageById(messageId);
-//       if(address == null || message == null)
-//           return null;
-//       // check is nessesary
-//       ObjectId addressobjectId = new ObjectId(addressId.toString(16));
-//
-//       ObjectId messageobjectId = new ObjectId(messageId.toString(16));
-//
-//
-//// TODO compare to method ObjectID
-//       List<Message> messages = messageRepository.findAllAddressMessages(addressobjectId);
-//       if(messages == null) return null;
-//       List<Message> postmessages = new LinkedList<>();
-//       for(Message o : messages) {
-//           ObjectId currentMessageobjectId = new ObjectId(o.getId().toString(16));
-//           if(currentMessageobjectId.compareTo(messageobjectId)>0)
-//           {
-//                messages.add(messageRepository.findOne(messageRepository.findMessage(currentMessageobjectId).getId()));
-//           }
-//
-//       }
-//       return messages;
-//   }
-
-
-//    @Override
-//    public List<Message> findAllAddressMessages(Address address) {
-//        if(address!= null) {
-//            ObjectId addressId = new ObjectId(address.getId().toString(16));
-//            List<Message> messages = messageRepository.findAllAddressMessages(addressId);
-//            return messages;
-//        }
-//        else return null;
-//
-//    }
+    @Override
+    public List<Message> findAllAddressMessages(BigInteger addressId) {
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
+        if (addressRepository.findOne(addressId) != null) {
+            List<Message> messages = messageRepository.findAllAddressMessages(objectAddressId);
+            return messages;
+        } else return null;
+    }
 
     @Override
     public Message findOne(BigInteger messageId) {
         return messageRepository.findOne(messageId);
+    }
+
+    public ObjectId convertBigIntegerToObjectId(BigInteger addressId) {
+        ObjectId objectAddressId;
+        try {
+            objectAddressId = new ObjectId(addressId.toString(16));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        return objectAddressId;
     }
 }

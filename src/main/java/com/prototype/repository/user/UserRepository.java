@@ -25,4 +25,6 @@ public interface UserRepository {
     Role getRoleByAddress(User user, Address address);
 
     AddressData getAddressDataByAddress(User user, Address address);
+
+    AddressData getAddressData(User user, Address address, String apartment);
 }

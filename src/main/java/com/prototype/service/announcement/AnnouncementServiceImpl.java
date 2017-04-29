@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 @Service("AnnouncementService")
@@ -30,7 +29,12 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
     @Override
     public List<UserAnnouncementEvent> findAllAnnouncementsOfAddress(BigInteger addressId) {
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId;
+        try {
+            objectAddressId = new ObjectId(addressId.toString(16));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
         return eventRepository.findAllAnnouncementsOfAddress(objectAddressId);
     }
 

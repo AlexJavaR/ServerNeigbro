@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Document(collection = "Event")
 public abstract class GlobalEvent extends Event
 {
+
     public GlobalEvent(LocalDateTime dateEvent) {
         super(dateEvent);
     }

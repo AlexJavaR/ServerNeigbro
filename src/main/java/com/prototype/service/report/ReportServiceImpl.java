@@ -12,12 +12,17 @@ import com.prototype.repository.address.AddressRepository;
 import com.prototype.repository.event.EventDao;
 import com.prototype.repository.event.EventRepository;
 import com.prototype.repository.user.UserRepository;
+import org.apache.commons.io.FileUtils;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -30,22 +35,31 @@ import static java.time.temporal.TemporalAdjusters.lastDayOfMonth;
 @Service("ReportService")
 public class ReportServiceImpl implements ReportService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
+    private final EventRepository eventRepository;
+
+    private final AddressRepository addressRepository;
+
+    private final EventDao eventDao;
+
+    private String filePath = "uploadedReports";
 
     @Autowired
-    private EventRepository eventRepository;
-
-    @Autowired
-    private AddressRepository addressRepository;
-
-    @Autowired
-    private EventDao eventDao;
+    public ReportServiceImpl(UserRepository userRepository, EventRepository eventRepository, AddressRepository addressRepository, EventDao eventDao) {
+        this.userRepository = userRepository;
+        this.eventRepository = eventRepository;
+        this.addressRepository = addressRepository;
+        this.eventDao = eventDao;
+    }
 
     @Override
     public GeneratedReportEvent createReport(BigInteger userId, BigInteger addressId, LocalDateTime startDate, LocalDateTime endDate) {
         Address currentAddress = addressRepository.findOne(addressId);
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
         GeneratedReportEvent generatedReportEvent = new GeneratedReportEvent(endDate, currentAddress);
 
         //List<ManagerPaymentEvent> listManagerPayments = eventRepository.getManagerPaymentEventBetween(objectAddressId, startDate, endDate);
@@ -60,50 +74,68 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public UploadReportEvent createEmptyUploadedReportEvent( UploadReportEvent uploadReportEvent)
-    {
+    public UploadReportEvent createEmptyUploadedReportEvent(UploadReportEvent uploadReportEvent) {
         return eventRepository.save(uploadReportEvent);
     }
 
     @Override
-    public UploadReportEvent createUploadReportEvent(BigInteger userId, BigInteger addressId, File file) {
-        if (userId != null && addressId != null && file.length() != 0) {
-            Address address = addressRepository.findOne(addressId);
-            User user = userRepository.findOne(userId);
-            Role role = userRepository.getRoleByAddress(user, address);
-            if (user != null && address != null) {
-                if (Role.MANAGER.equals(role)) {
-                    UploadReportEvent uploadReportEvent = new UploadReportEvent(LocalDateTime.now(), address, file.getName(), file.length());
+    public UploadReportEvent uploadFileForUploadReportEvent(BigInteger userId, BigInteger addressId, MultipartFile uploadedFile) {
+        User manager = userRepository.findOne(userId);
+        Address address = addressRepository.findOne(addressId);
+        if (Role.MANAGER.equals(userRepository.getRoleByAddress(manager, address))) {
+            try {
+                byte[] bytes = uploadedFile.getBytes();
+                File dir = new File(filePath + File.separator + addressId.toString());
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
 
+                String fileName = uploadedFile.getOriginalFilename();
+                String[] fileArraySplit = fileName.split("\\.");
+                String fileExtension = fileArraySplit[fileArraySplit.length - 1];
+                UploadReportEvent uploadReportEvent =
+                        new UploadReportEvent(LocalDateTime.now(), address, fileName, fileExtension, uploadedFile.getSize());
+                createEmptyUploadedReportEvent(uploadReportEvent);
+                String name = uploadReportEvent.getId().toString();
 
-                    return eventRepository.save(uploadReportEvent);
+                File file = new File(dir.getAbsolutePath() + File.separator + name);
+                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
+                stream.write(bytes);
+                stream.flush();
+                stream.close();
+                return uploadReportEvent;
+            } catch (Exception e) {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public void deleteCurrentUploadedReportAndFile(BigInteger userId, BigInteger addressId, BigInteger reportId) {
+        User manager = userRepository.findOne(userId);
+        Address address = addressRepository.findOne(addressId);
+
+        if (Role.MANAGER.equals(userRepository.getRoleByAddress(manager, address))) {
+            if (findCurrentUploadedReportsOfAddress(addressId, userId, reportId) != null) {
+                eventRepository.delete(reportId);
+
+                try {
+                    FileUtils.forceDelete(FileUtils.getFile(filePath + File.separator + addressId.toString() + File.separator + reportId.toString()));
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         }
-        return null;
     }
-//
-//
-//    public UploadReportEvent createUploadReportEvent2(BigInteger userId, BigInteger addressId, UploadReportEvent uploadReportEvent, File file) {
-//        if (userId != null && addressId != null && file.length() != 0) {
-//            Address address = addressRepository.findOne(addressId);
-//            User user = userRepository.findOne(userId);
-//            Role role = userRepository.getRoleByAddress(user, address);
-//            if (user != null && address != null) {
-//                if (Role.MANAGER.equals(role)) {
-//
-//                    ObjectId objectId =  new ObjectId(uploadReportEvent.getId().toString(16));
-//                    return eventRepository.setFileNameUploadedReportEvent(o, file.getName());
-//                }
-//            }
-//
-//        }
-//         return null;
-//    }
 
     @Override
     public List<UploadReportEvent> findAllUploadedReportsOfAddress(BigInteger addressId, BigInteger userId) {
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
         User user = userRepository.findOne(userId);
         for (AddressData addressData : user.getAddressDataList()) {
             if (Objects.equals(addressData.getAddress().getId(), addressId)) {
@@ -116,7 +148,10 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<ReportEvent> findAllReportOfAddress(BigInteger addressId, BigInteger userId) {
-        ObjectId objectAddressId = new ObjectId(addressId.toString(16));
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
         User currentUser = userRepository.findOne(userId);
         for (AddressData addressData : currentUser.getAddressDataList()) {
             if (Objects.equals(addressData.getAddress().getId(), addressId)) {
@@ -141,20 +176,24 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public UploadReportEvent findCurrentUploadedReportsOfAddress(BigInteger addressId, BigInteger userId, BigInteger textId) {
+    public File findCurrentUploadedReportsOfAddress(BigInteger addressId, BigInteger userId, BigInteger reportId) {
         User user = userRepository.findOne(userId);
-        ObjectId objectAddressId = new ObjectId((addressId.toString(16)));
-        for (AddressData addressData : user.getAddressDataList()) {
-            if (Objects.equals(addressData.getAddress().getId(), addressId)) {
-                List<UploadReportEvent> uploadReportEvents = eventRepository.findAllUploadedReportEventOfAddress(objectAddressId);
-                for (UploadReportEvent u : uploadReportEvents)
-                    if (u.getId().equals(textId))
-                        return u;
+        Address address = addressRepository.findOne(addressId);
+        ObjectId objectAddressId = convertBigIntegerToObjectId(addressId);
+        if (objectAddressId == null) {
+            return null;
+        }
+        AddressData addressData = userRepository.getAddressDataByAddress(user, address);
+        if (Objects.equals(addressData.getAddress().getId(), addressId)) {
+            UploadReportEvent uploadReportEvent = (UploadReportEvent) eventRepository.findOne(reportId);
+            if (uploadReportEvent == null) {
+                return null;
             }
         }
-        return null;
-    }
 
+        File file = FileUtils.getFile(filePath + File.separator + addressId.toString() + File.separator + reportId.toString());
+        return file;
+    }
 
     //@Scheduled(fixedRate = 500)
     @Scheduled(cron = "0 3 0 1 * ?")
@@ -167,7 +206,20 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public void deleteCurrentUploadedReport(UploadReportEvent uploadReportEvent) {
-        eventRepository.delete(uploadReportEvent.getId());
+    public void createTestMonthlyReport() {
+        LocalDateTime currentDate = LocalDateTime.now();
+        LocalDateTime startDate = currentDate.with(firstDayOfMonth()).with(LocalTime.MIDNIGHT);
+        LocalDateTime endDate = LocalDateTime.now();
+        addressRepository.findAll().forEach(address -> createReport(null, address.getId(), startDate, endDate));
+    }
+
+    public ObjectId convertBigIntegerToObjectId(BigInteger addressId) {
+        ObjectId objectAddressId;
+        try {
+            objectAddressId = new ObjectId(addressId.toString(16));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        return objectAddressId;
     }
 }

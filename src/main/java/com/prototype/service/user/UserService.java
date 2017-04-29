@@ -1,5 +1,6 @@
 package com.prototype.service.user;
 
+import com.prototype.model.BankAccount;
 import com.prototype.model.User;
 
 import java.math.BigInteger;
@@ -16,4 +17,6 @@ public interface UserService {
     List<User> findAll();
 
     User update(User user);
+
+    BankAccount getBankAccount(BigInteger managerId);
 }

@@ -19,4 +19,6 @@ public interface UserService {
     User update(User user);
 
     BankAccount getBankAccount(BigInteger managerId);
+
+    void addDemoAddressToAllExistUsers();
 }

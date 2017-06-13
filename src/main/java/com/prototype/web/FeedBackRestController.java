@@ -23,9 +23,9 @@ public class FeedBackRestController {
 
     @GetMapping()
     public ResponseEntity<Map> sendFeedback(@RequestParam(value = "name", required = false) String name,
-                                             @RequestParam(value = "email", required = false) String email,
-                                             @RequestParam(value = "phone", required = false) String phone,
-                                             @RequestParam(value = "message", required = false) String message) {
+                                            @RequestParam(value = "email", required = false) String email,
+                                            @RequestParam(value = "phone", required = false) String phone,
+                                            @RequestParam(value = "message", required = false) String message) {
         emailService.sendFeedback(name, email, phone, message);
         Map<String, Integer> response = new HashMap<>();
         response.put("success", 1);

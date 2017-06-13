@@ -54,6 +54,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         web.ignoring().antMatchers("/api/v1/sale/denied");
         web.ignoring().antMatchers("/api/v1/feedback");
         web.ignoring().antMatchers("/api/v1/google/map/city/location");
+        web.ignoring().antMatchers("/api/health");
         web.ignoring().antMatchers(HttpMethod.OPTIONS);
         //web.ignoring().antMatchers("/login");
     }

@@ -6,6 +6,7 @@ import com.prototype.model.event.payment.BillEvent;
 import com.prototype.model.event.payment.ManagerPaymentEvent;
 import com.prototype.model.event.report.ReportEvent;
 import com.prototype.model.event.report.UploadReportEvent;
+import com.prototype.model.event.survey.SurveyEvent;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Repository;
 
@@ -41,4 +42,6 @@ public interface EventRepository {
     List<ReportEvent> findAllReportOfAddress(ObjectId objectAddressId);
 
     List<UploadReportEvent> findAllUploadedReportEventOfAddress(ObjectId objectAddressId);
+
+    List<SurveyEvent> findAllSurveyEventByAddress(ObjectId objectAddressId);
 }

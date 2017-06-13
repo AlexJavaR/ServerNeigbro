@@ -6,6 +6,7 @@ import com.prototype.model.event.payment.BillEvent;
 import com.prototype.model.event.payment.ManagerPaymentEvent;
 import com.prototype.model.event.report.ReportEvent;
 import com.prototype.model.event.report.UploadReportEvent;
+import com.prototype.model.event.survey.SurveyEvent;
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -42,4 +43,7 @@ public interface CrudEventRepository extends MongoRepository<Event, BigInteger> 
 
     @Query(value = "{'_class' : 'com.prototype.model.event.report.UploadReportEvent', 'address.$id' : ?0}")
     List<UploadReportEvent> findAllUploadedReportEventOfAddress(ObjectId objectAddressId, Sort sort);
+
+    @Query(value = "{'_class' : 'com.prototype.model.event.survey.SurveyEvent', 'address.$id' : ?0}")
+    List<SurveyEvent> findAllSurveyEventByAddress(ObjectId objectAddressId, Sort dateEvent);
 }

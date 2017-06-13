@@ -24,4 +24,6 @@ public interface AddressService {
     Address findAddressByPlaceIdAndEntrance(String placeId, String entrance);
 
     AddressData updateAddressData(AddressData addressData, BigInteger userId);
+
+    AddressData getDemoAddressData();
 }

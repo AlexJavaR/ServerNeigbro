@@ -1,8 +1,10 @@
 package com.prototype.web.jwt;
 
+import com.prototype.model.AddressData;
 import com.prototype.model.User;
 import com.prototype.security.SecUserDetailsService;
 import com.prototype.security.jwt.JwtTokenUtil;
+import com.prototype.service.address.AddressService;
 import com.prototype.service.user.UserService;
 import com.prototype.to.UserWithJwt;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -12,12 +14,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mobile.device.Device;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping(value = RegistrationRestController.REST_URL, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -27,6 +27,9 @@ public class RegistrationRestController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AddressService addressService;
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
@@ -41,7 +44,10 @@ public class RegistrationRestController {
         if (!valid) {
             return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
         }
-        user.setAddressDataList(new ArrayList<>());
+        AddressData addressData = addressService.getDemoAddressData();
+        List<AddressData> addressDataList = new ArrayList<>();
+        addressDataList.add(addressData);
+        user.setAddressDataList(addressDataList);
         User createdUser = userService.save(user);
         if (createdUser == null) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -53,5 +59,11 @@ public class RegistrationRestController {
 
         // Return the token
         return new ResponseEntity<>(userWithJwt, HttpStatus.CREATED);
+    }
+
+    @GetMapping(value = "/add/demo/address")
+    public ResponseEntity<Boolean> addDemoAddress() {
+        userService.addDemoAddressToAllExistUsers();
+        return new ResponseEntity<>(true, HttpStatus.OK);
     }
 }

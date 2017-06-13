@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import com.prototype.model.Address;
 import com.prototype.model.AddressData;
@@ -207,5 +208,12 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public Address findAddressByPlaceIdAndEntrance(String placeId, String entrance) {
         return addressRepository.findByPlaceIdAndEntrance(placeId, entrance);
+    }
+
+    @Override
+    public AddressData getDemoAddressData() {
+        String apart = String.valueOf(new Random().nextInt(100) + 1);
+        BigInteger addressId = new BigInteger("27611762673328170755533579207");
+        return new AddressData(addressRepository.findOne(addressId), "Demo address", apart, Role.HOUSEMATE);
     }
 }

@@ -1,6 +1,5 @@
 package com.prototype.model.event;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.prototype.model.Address;
 import com.prototype.model.User;
 import org.springframework.data.mongodb.core.mapping.DBRef;
